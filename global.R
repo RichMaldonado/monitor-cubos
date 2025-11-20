@@ -1,0 +1,490 @@
+# --- 1. Cargar las librerías necesarias ---
+library(shiny)
+library(here)
+library(DT)
+library(readxl)
+library(dplyr)
+library(stringr)
+library(bslib)
+library(shinyWidgets)
+library(htmltools)
+library(dplyr)
+library(scales)
+library(shinycssloaders)
+library(jsonlite)
+library(htmltools) 
+library(writexl)
+
+leer_excel_seguro <- function(ruta_archivo, ...) {
+  
+  # 1. Verificar existencia
+  if (!file.exists(ruta_archivo)) {
+    stop(paste("ERROR CRÍTICO: El archivo no existe:", ruta_archivo))
+  }
+  
+  # 2. Definir ruta temporal (en la carpeta temporal del sistema)
+  # Usamos basename para mantener el nombre pero en una carpeta segura
+  archivo_temp <- file.path(tempdir(), paste0("temp_", basename(ruta_archivo)))
+  
+  # 3. Intentar copiar el archivo (Bucle de reintento)
+  intentos <- 0
+  max_intentos <- 5
+  copiado <- FALSE
+  
+  while(intentos < max_intentos && !copiado) {
+    tryCatch({
+      # file.copy devuelve TRUE si tuvo éxito
+      if (file.copy(from = ruta_archivo, to = archivo_temp, overwrite = TRUE)) {
+        copiado <- TRUE
+      } else {
+        stop("Fallo en file.copy sin error explícito")
+      }
+    }, warning = function(w) {
+      message(paste("Advertencia copiando (intento", intentos + 1, "):", w$message))
+    }, error = function(e) {
+      message(paste("Archivo bloqueado o error (intento", intentos + 1, "):", e$message))
+    })
+    
+    if (!copiado) {
+      Sys.sleep(1) # Esperar 1 segundo antes de reintentar
+      intentos <- intentos + 1
+    }
+  }
+  
+  if (!copiado) {
+    stop("No se pudo acceder al archivo Excel después de 5 intentos. El Scraper podría estar escribiendo.")
+  }
+
+    # 4. Asegurar limpieza: Borrar el temporal al salir de la función (éxito o error)
+  on.exit(try(unlink(archivo_temp), silent = TRUE), add = TRUE)
+  
+  # 5. Leer la copia temporal
+  # Pasamos '...' para permitir argumentos como sheet = "CUBO"
+  datos <- readxl::read_excel(archivo_temp, ...)
+  
+  return(datos)
+}
+
+
+
+ruta_carpeta_datos <- here::here("datos")
+
+# 2. Encontrar el archivo de CUBOgv más reciente
+archivos_gv <- list.files(
+  path = ruta_carpeta_datos, 
+  pattern = "CUBOgv_\\d{6}\\.xlsx", # Busca archivos que coincidan con el patrón
+  full.names = TRUE                 # Obtiene la ruta completa al archivo
+)
+
+if (length(archivos_gv) == 0) {
+  stop("ERROR: No se encontraron archivos de datos para GV en la carpeta 'datos'.")
+}
+
+# Ordena los archivos por nombre en orden descendente y selecciona el primero (el más reciente)
+ruta_archivo_pais <- sort(archivos_gv, decreasing = TRUE)[1]
+
+
+# 3. Encontrar el archivo de CUBOsector más reciente
+archivos_sector <- list.files(
+  path = ruta_carpeta_datos, 
+  pattern = "CUBOsector_\\d{6}\\.xlsx", 
+  full.names = TRUE
+)
+
+if (length(archivos_sector) == 0) {
+  stop("ERROR: No se encontraron archivos de datos para Sectores en la carpeta 'datos'.")
+}
+
+# Ordena y selecciona el más reciente
+ruta_archivo_sector <- sort(archivos_sector, decreasing = TRUE)[1]
+
+
+# 4. Ruta al archivo JSON (se mantiene igual pero usando la ruta relativa)
+ruta_json <- file.path(ruta_carpeta_datos, "update_timestamp.json")
+
+
+# --- Mensajes de diagnóstico (Opcional, útil para depuración) ---
+message("Cargando datos de país desde: ", ruta_archivo_pais)
+message("Cargando datos de sector desde: ", ruta_archivo_sector)
+message("Cargando timestamp desde: ", ruta_json)
+
+
+
+
+# Sustituimos read_excel por leer_excel_seguro
+cubo_pais_df_raw <- leer_excel_seguro(ruta_archivo_pais, sheet = "CUBO") %>% 
+  filter(grepl("GV [0-9]{1,2}", `Nombre GV`))
+cubo_sector_df_raw <- leer_excel_seguro(ruta_archivo_sector, sheet = "CUBO") %>% 
+  filter(grepl("GV[0-9]{1,2}", `Nombre Sector`))
+message("--- CARGA COMPLETADA ---")
+
+
+
+
+# Ahora sí puedes ejecutar grep sobre los dataframes que ya existen en memoria
+names_gerencias <- grep("GV [0-9]{1,2}", unique(cubo_pais_df_raw$`Nombre GV`), value = TRUE)
+names_sectores <- grep("GV[0-9]{1,2}", unique(cubo_sector_df_raw$`Nombre Sector`), value = TRUE)
+
+
+
+
+theme_natura <- bslib::bs_theme(
+  version = 5,
+  
+  # 1. Paleta de Colores Extraída de la Guía de Estilo
+  # ---------------------------------------------------
+  primary = "#FF9526",      
+  secondary = "#2E2D2C",     
+  info = "#33AAFF",         
+  danger = "#A40025",       
+  success = "#105243",      
+  
+  # 2. Fondo y Texto
+  # ---------------------------------------------------
+  bg = "#FFFFFF",           
+  fg = "#2E2D2C",           
+  
+  # 3. Tipografía
+  # ---------------------------------------------------
+  base_font = bslib::font_google("Montserrat", local = FALSE),
+  heading_font = bslib::font_google("Lato", local = FALSE),
+  
+  # 4. Ajustes a Componentes Específicos
+  # ---------------------------------------------------
+  "navbar-bg" = "#FFFFFF", 
+  "navbar-light-color" = "#2E2D2C",
+  "navbar-light-hover-color" = "#FF9526",
+  "navbar-light-active-color" = "#FF9526",
+  "link-color" = "#FF9526",
+  "link-hover-color" = "#CF3100" # Naranja oscuro al pasar el mouse
+)
+
+
+
+# ==================================
+# Gerentes de Ventas
+
+cubo_pais_df_clean <- cubo_pais_df_raw %>%
+  mutate(across(-c(`Nombre GV`), ~suppressWarnings(as.numeric(.)))) %>%
+  filter(
+    stringr::str_detect(`Nombre GV`, "GV"),
+    !(`Nombre GV` %in% c("GV PRUEBAS DE PROMO","GV COLABORADORES CELAYA") )
+    
+  )
+
+cubo_pais_agregado <- cubo_pais_df_clean %>%
+  group_by(`Código GV`, `Nombre GV`) %>%
+  summarise(
+    across(where(is.numeric), ~sum(., na.rm = TRUE)), .groups = 'drop'
+  ) %>%
+  arrange(`Código GV`)
+
+# --- Creación de Tablas (Código completo) ---
+
+# Tabla 1: Inactividad
+tabla_inactividad_equipos <- cubo_pais_agregado %>%
+  select(
+    GV = `Código GV`, Equipo = `Nombre GV`, Disp_Real_C7 = `Disponibles Real`,
+    Inact_Real_3 = `Inactiva 3 Real`, Inact_2 = `Inactiva 2 Real`, Inact_1 = `Inactiva 1 Real`
+  ) %>%
+  mutate(
+    Porc_Inact_3 = Inact_Real_3 / Disp_Real_C7,
+    Porc_Inact_2 = Inact_2 / Disp_Real_C7,
+    Porc_Inact_1 = Inact_1 / Disp_Real_C7
+  )
+total_inactividad <- tabla_inactividad_equipos %>%
+  summarise(
+    GV = NA, Equipo = "TOTAL PAIS", across(where(is.numeric), ~sum(., na.rm = TRUE))
+  ) %>%
+  mutate(
+    Porc_Inact_3 = Inact_Real_3 / Disp_Real_C7, Porc_Inact_2 = Inact_2 / Disp_Real_C7,
+    Porc_Inact_1 = Inact_1 / Disp_Real_C7
+  )
+tabla_inactividad <- bind_rows(tabla_inactividad_equipos, total_inactividad)
+
+# Tabla 2: Operaciones
+tabla_disponibles_equipos <- cubo_pais_agregado %>%
+  select(
+    GV = `Código GV`, Equipo = `Nombre GV`,
+    
+    Disp_Meta = `Disponibles Meta`, 
+    Disp_Real = `Disponibles Real`,
+    
+    Saldo_Meta = `Saldo Disponibles Meta`, 
+    Saldo_Real = `Saldo Disponibles Real`,
+    
+    Inicios_Meta = `Inicios + Reinicios Meta`, 
+    Inicios_Real = `Inicios + Reinicios Real`,
+    
+    Recuperos_Meta = `Recuperos Meta`, 
+    Recuperos_Real = `Recuperos Real`
+  ) %>%
+  mutate(
+    Disp_Alcanz = Disp_Real / Disp_Meta, 
+    Saldo_Alcanz = Saldo_Real / Saldo_Meta,
+    
+    Inicios_Cump = Inicios_Real / Inicios_Meta, 
+    Inicios_vs_Disp = Inicios_Real / Disp_Real,
+    
+    Recuperos_Cump = Recuperos_Real / Recuperos_Meta, 
+    Recuperos_vs_Disp = Recuperos_Real / Disp_Real
+  )
+total_disponibles <- tabla_disponibles_equipos %>%
+  summarise(
+    GV = NA, Equipo = "TOTAL PAIS", across(where(is.numeric), ~sum(., na.rm = TRUE))
+  ) %>%
+  mutate(
+    Disp_Alcanz = Disp_Real / Disp_Meta, 
+    Saldo_Alcanz = Saldo_Real / Saldo_Meta,
+    
+    Inicios_Cump = Inicios_Real / Inicios_Meta, 
+    Inicios_vs_Disp = Inicios_Real / Disp_Real,
+    
+    Recuperos_Cump = Recuperos_Real / Recuperos_Meta, 
+    Recuperos_vs_Disp = Recuperos_Real / Disp_Real
+  )
+tabla_disponibles <- bind_rows(tabla_disponibles_equipos, total_disponibles)
+
+# Tabla 3: Actividad
+tabla_actividad_equipos <- cubo_pais_agregado %>%
+  select(
+    GV = `Código GV`, Equipo = `Nombre GV`,
+    Actividad_Porc_Meta = `% Actividad Meta`, Activas_Meta = `Activas Total Meta`,
+    Activas_Real = `Activas Total Real`, Act_Frec_Porc_Meta = `% Actividad Frecuente Meta`,
+    Act_Frec_Porc_Real = `% Actividad Frecuente Real`, Disp_Real = `Disponibles Real`
+  ) %>%
+  mutate(
+    Actividad_Porc_Meta = Actividad_Porc_Meta / 100, Act_Frec_Porc_Meta = Act_Frec_Porc_Meta / 100,
+    Act_Frec_Porc_Real = Act_Frec_Porc_Real / 100, Actividad_Porc_Real = Activas_Real / Disp_Real,
+    Actividad_Porc_Alcanz = Actividad_Porc_Real / Actividad_Porc_Meta, Activas_Alcanz = Activas_Real / Activas_Meta,
+    Act_Frec_Porc_Alcanz = Act_Frec_Porc_Real / Act_Frec_Porc_Meta
+  ) %>%
+  select(-Disp_Real)
+total_actividad <- tabla_actividad_equipos %>%
+  summarise(
+    GV = NA, Equipo = "TOTAL PAIS",
+    Activas_Meta = sum(Activas_Meta, na.rm = TRUE), Activas_Real = sum(Activas_Real, na.rm = TRUE)
+  )
+tabla_actividad <- bind_rows(tabla_actividad_equipos, total_actividad)
+
+# Tabla 4: Productividad
+tabla_productividad_equipos <- cubo_pais_agregado %>%
+  select(
+    GV = `Código GV`, Equipo = `Nombre GV`,
+    Prod_Dolar_Real = `Productividad Real`, Fact_Meta = `Facturación Total Meta`,
+    Fact_Real = `Facturación Total Real`
+  ) %>%
+  mutate(Fact_Alcanz = Fact_Real / Fact_Meta)
+total_productividad <- tabla_productividad_equipos %>%
+  summarise(
+    GV = NA, Equipo = "TOTAL PAIS", across(where(is.numeric), ~sum(., na.rm = TRUE))
+  ) %>%
+  mutate(Fact_Alcanz = Fact_Real / Fact_Meta)
+tabla_productividad <- bind_rows(tabla_productividad_equipos, total_productividad)
+
+
+
+
+
+
+
+# ====================
+# Sectores
+
+# Función para limpiar y convertir a numérico
+clean_to_numeric <- function(x) {
+  as.numeric(gsub(",", "", gsub("-", NA, x)))
+}
+
+cubo_clean <- cubo_sector_df_raw %>%
+  mutate(across(where(is.character) & !`Nombre Sector`, clean_to_numeric)) 
+
+total_facturacion_gerencia <- sum(cubo_clean$`Facturación Total Real`, na.rm = TRUE)
+
+resumen_general <- cubo_clean %>%
+  dplyr::mutate(
+    # --- Facturación ---
+    `%Sect /GV` = `Facturación Total Real` / total_facturacion_gerencia,
+    
+    `Facturacion % Cumpl` = `Facturación Total Real` / `Facturación Total Meta`,
+    `Facturacion Faltan 95%` = (`Facturación Total Meta` * 0.95) - `Facturación Total Real`,
+    `Facturacion Faltan 100%` = `Facturación Total Meta` - `Facturación Total Real`,
+    
+    # --- Disponibles ---
+    `Disponibles % Cumpl` = `Disponibles Real` / `Disponibles Meta`,
+    `Disponibles Faltan 95%` = (`Disponibles Meta` * 0.95) - `Disponibles Real`,
+    `Disponibles Faltan 100%` = `Disponibles Meta` - `Disponibles Real`,
+    
+    # --- Activas ---
+    `Activas % Cumpl` = `Activas Total Real` / `Activas Total Meta`,
+    `Activas Faltan 95%` = (`Activas Total Meta` * 0.95) - `Activas Total Real`,
+    `Activas Faltan 100%` = `Activas Total Meta` - `Activas Total Real`,
+    
+    # --- Saldo ---
+    `Saldo % Cumpl` = `Saldo Disponibles Real` / `Saldo Disponibles Meta`,
+    `Saldo Faltan!` = `Saldo Disponibles Meta` - `Saldo Disponibles Real`,
+    
+    # --- Productividad ---
+    `Productividad Meta` = `Facturación Total Meta` / `Activas Total Meta`,
+    `Productividad Real` = `Facturación Total Real` / `Activas Total Real`,
+    `Productividad % Cumpl` = `Productividad Real` / `Productividad Meta`,
+    
+    # --- % Actividad ---
+    `% Actividad Real` = `Activas Total Real` / `Disponibles Real`,
+    `% Actividad % Cumpl` = `% Actividad Real`/ `% Actividad Meta`,
+    
+    # --- Inicios + Reinicios ---
+    `Inicios + Reinicios % Cumpl` = `Inicios + Reinicios Real` / `Inicios + Reinicios Meta`,
+    `Inicios + Reinicios Faltan!` = `Inicios + Reinicios Meta` - `Inicios + Reinicios Real`,
+    
+    # --- Recuperos ---
+    `Recuperos % Cumpl` = dplyr::if_else(
+      is.na(`Recuperos Meta`) | `Recuperos Meta` == 0, 
+      0, 
+      `Recuperos Real` / `Recuperos Meta`
+    ),
+    `Recuperos Faltan!` = dplyr::if_else(
+      is.na(`Recuperos Meta`), 
+      0, 
+      `Recuperos Meta` - `Recuperos Real`
+    ),
+    
+    # --- Inactivas (I3, I2) ---
+    `% I3` = `Inactiva 3 Real` / `Disponibles Real`,
+    `% I2` = `Inactiva 2 Real` / `Disponibles Real`
+  )
+
+
+# --- PASO 5 (Rmd): SELECCIÓN Y RENOMBRE DE COLUMNAS ---
+
+resumen_final <- resumen_general %>%
+  dplyr::select(
+    `Código Sector`,
+    `Sector` = `Nombre Sector`,
+    `%Sect /GV`,
+    
+    `Facturación Meta` = `Facturación Total Meta`,
+    `Facturación Real` = `Facturación Total Real`,
+    `Facturacion % Cumpl`,
+    `Facturacion Faltan 95%`,
+    `Facturacion Faltan 100%`,
+    
+    `Disponibles Meta`,
+    `Disponibles Real`,
+    `Disponibles % Cumpl`,
+    `Disponibles Faltan 95%`,
+    `Disponibles Faltan 100%`,
+    
+    `Activas Meta` = `Activas Total Meta`,
+    `Activas Real` = `Activas Total Real`,
+    `Activas % Cumpl`,
+    `Activas Faltan 95%`,
+    `Activas Faltan 100%`,
+    
+    `Saldo Real` = `Saldo Disponibles Real`,
+    `Saldo Meta` = `Saldo Disponibles Meta`,
+    `Saldo % Cumpl`,
+    `Saldo Faltan!`,
+    
+    `Productividad Meta`, 
+    `Productividad Real`, 
+    `Productividad % Cumpl`,
+    
+    `% Actividad Real`, 
+    `% Actividad Meta`,
+    `% Actividad % Cumpl`,
+    
+    `Inicios + Reinicios Meta`,
+    `Inicios + Reinicios Real`,
+    `Inicios + Reinicios % Cumpl`,
+    `Inicios + Reinicios Faltan!`,
+    
+    `Recuperos Meta`,
+    `Recuperos Real`,
+    `Recuperos % Cumpl`,
+    `Recuperos Faltan!`,
+    
+    `Inact 3 Real` = `Inactiva 3 Real`,
+    `% I3`,
+    
+    `Inact 2 Real` = `Inactiva 2 Real`,
+    `% I2`,
+    
+    `Indisponibles Total` = `Indisponibles Real`,
+    `I4` = `Inactiva 4 Real`,
+    `I5` = `Inactiva 5 Real`,
+    `I6` = `Inactiva 6 Real`
+  )
+
+
+
+
+
+
+estructura_columnas <- list(
+  "Facturación" = list(
+    "Meta" = "Facturación Meta",
+    "Real" = "Facturación Real",
+    "% Cumpl" = "Facturacion % Cumpl",
+    "Faltan 95%" = "Facturacion Faltan 95%",
+    "Faltan 100%" = "Facturacion Faltan 100%"
+  ),
+  "Disponibles" = list(
+    "Meta" = "Disponibles Meta",
+    "Real" = "Disponibles Real",
+    "% Cumpl" = "Disponibles % Cumpl",
+    "Faltan 95%" = "Disponibles Faltan 95%",
+    "Faltan 100%" = "Disponibles Faltan 100%"
+  ),
+  "Activas" = list(
+    "Meta" = "Activas Meta",
+    "Real" = "Activas Real",
+    "% Cumpl" = "Activas % Cumpl",
+    "Faltan 95%" = "Activas Faltan 95%",
+    "Faltan 100%" = "Activas Faltan 100%"
+  ),
+  "Saldo" = list(
+    "Real" = "Saldo Real",
+    "Meta" = "Saldo Meta",
+    "% Cumpl" = "Saldo % Cumpl",
+    "Faltan!" = "Saldo Faltan!"
+  ),
+  "Productividad" = list(
+    "Meta" = "Productividad Meta",
+    "Real" = "Productividad Real",
+    "% Cumpl" = "Productividad % Cumpl"
+  ),
+  "% Actividad" = list(
+    "Real" = "% Actividad Real",
+    "Meta" = "% Actividad Meta",
+    "% Cumpl" = "% Actividad % Cumpl"
+  ),
+  "Inicios + Reinicios" = list(
+    "Meta" = "Inicios + Reinicios Meta",
+    "Real" = "Inicios + Reinicios Real",
+    "% Cumpl" = "Inicios + Reinicios % Cumpl",
+    "Faltan!" = "Inicios + Reinicios Faltan!"
+  ),
+  "Recuperos" = list(
+    "Meta" = "Recuperos Meta",
+    "Real" = "Recuperos Real",
+    "% Cumpl" = "Recuperos % Cumpl",
+    "Faltan!" = "Recuperos Faltan!"
+  ),
+  "Inact 3" = list(
+    "Real" = "Inact 3 Real",
+    "% I3" = "% I3"
+  ),
+  "Inact 2" = list(
+    "Real" = "Inact 2 Real",
+    "% I2" = "% I2"
+  ),
+  "Indisponibles" = list(
+    "Total" = "Indisponibles Total",
+    "Inact 4" = "I4",
+    "Inact 5" = "I5",
+    "Inact 6" = "I6"
+  )
+)
+
+choices_virtual_select <- estructura_columnas
