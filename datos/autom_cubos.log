@@ -3074,3 +3074,215 @@ Exception: El inicio de sesión en el portal falló. El script no puede continuar.
 --- FASE 3: Finalizando y Actualizando Estado ---
 2025-11-20 15:01:23,817 - INFO - [AutomCubos] - PROCESO EXITOSO. Se descargaron exitosamente los 4 reportes solicitados.
 2025-11-20 15:01:23,819 - INFO - [AutomCubos] - Archivo de estado actualizado en 'C:\Users\339302\Documents\Monitor Datos GN W11-dly\app_monitor_metricas_cubos\datos\update_timestamp.json' con estado: SUCCESS
+2025-11-20 15:30:02,155 - INFO - [AutomCubos] - --- INICIANDO SCRIPT CONSOLIDADO DE SOLICITUD Y DESCARGA ---
+2025-11-20 15:30:02,157 - INFO - [AutomCubos] - Directorio de descargas asegurado en: 'C:\Users\339302\Documents\Monitor Datos GN W11-dly\app_monitor_metricas_cubos\datos'
+2025-11-20 15:30:02,163 - INFO - [AutomCubos] - Ciclos activos detectados: 202516, 202517.
+2025-11-20 15:30:03,884 - INFO - [AutomCubos] - Navegando a la página de inicio: https://commercial.natura.com/
+2025-11-20 15:30:24,803 - INFO - [AutomCubos] - ¡Inicio de sesión exitoso! URL final: https://commercial.natura.com/signIn?code=917324fc-b026-4ec2-a93a-8e1eba573453&redirect=%2F%3Fcode%3D917324fc-b026-4ec2-a93a-8e1eba573453
+2025-11-20 15:30:24,803 - INFO - [AutomCubos] - 
+--- FASE 1: Solicitando Reportes ---
+2025-11-20 15:30:43,123 - INFO - [AutomCubos] - Formulario de reportes cargado.
+2025-11-20 15:30:43,123 - INFO - [AutomCubos] - --- Iniciando solicitud para Nivel: 'GV', Ciclo: 202516 ---
+2025-11-20 15:30:50,747 - INFO - [AutomCubos] - Confirmación de éxito recibida.
+2025-11-20 15:30:54,652 - INFO - [AutomCubos] - ¡Solicitud para 'GV' en ciclo 202516 realizada con éxito!
+2025-11-20 15:30:54,652 - INFO - [AutomCubos] - Limpiando el formulario para la siguiente acción.
+2025-11-20 15:30:56,248 - INFO - [AutomCubos] - --- Iniciando solicitud para Nivel: 'Sector', Ciclo: 202516 ---
+2025-11-20 15:31:01,906 - INFO - [AutomCubos] - Confirmación de éxito recibida.
+2025-11-20 15:31:06,384 - INFO - [AutomCubos] - ¡Solicitud para 'Sector' en ciclo 202516 realizada con éxito!
+2025-11-20 15:31:06,384 - INFO - [AutomCubos] - Limpiando el formulario para la siguiente acción.
+2025-11-20 15:31:07,997 - INFO - [AutomCubos] - --- Iniciando solicitud para Nivel: 'GV', Ciclo: 202517 ---
+2025-11-20 15:31:13,122 - INFO - [AutomCubos] - Confirmación de éxito recibida.
+2025-11-20 15:31:17,522 - INFO - [AutomCubos] - ¡Solicitud para 'GV' en ciclo 202517 realizada con éxito!
+2025-11-20 15:31:17,522 - INFO - [AutomCubos] - Limpiando el formulario para la siguiente acción.
+2025-11-20 15:31:19,081 - INFO - [AutomCubos] - --- Iniciando solicitud para Nivel: 'Sector', Ciclo: 202517 ---
+2025-11-20 15:31:25,365 - INFO - [AutomCubos] - Confirmación de éxito recibida.
+2025-11-20 15:31:29,803 - INFO - [AutomCubos] - ¡Solicitud para 'Sector' en ciclo 202517 realizada con éxito!
+2025-11-20 15:31:29,803 - INFO - [AutomCubos] - Limpiando el formulario para la siguiente acción.
+2025-11-20 15:31:31,398 - INFO - [AutomCubos] - 
+--- FASE 2: Descargando Reportes ---
+2025-11-20 15:31:31,409 - INFO - [AutomCubos] - 
+--- Iniciando fase de descarga para los 4 reportes solicitados ---
+2025-11-20 15:31:31,409 - INFO - [AutomCubos] - Intento 1/10: Actualizando y buscando reportes listos...
+2025-11-20 15:31:31,462 - INFO - [AutomCubos] - Buscando reporte para: CUBOgv_202516.xlsx
+2025-11-20 15:31:31,520 - INFO - [AutomCubos] - ¡Coincidencia encontrada para CUBOgv_202516.xlsx! Estado: Disponible para Descarga. Descargando...
+2025-11-20 15:31:35,173 - INFO - [AutomCubos] - Descargando a temporal: temp_1763674291_CUBOgv_202516.xlsx ...
+2025-11-20 15:31:35,557 - INFO - [AutomCubos] - -> ÉXITO: Archivo actualizado correctamente en: C:\Users\339302\Documents\Monitor Datos GN W11-dly\app_monitor_metricas_cubos\datos\CUBOgv_202516.xlsx
+2025-11-20 15:31:35,557 - INFO - [AutomCubos] - Buscando reporte para: CUBOsector_202516.xlsx
+2025-11-20 15:31:35,603 - INFO - [AutomCubos] - ¡Coincidencia encontrada para CUBOsector_202516.xlsx! Estado: Disponible para Descarga. Descargando...
+2025-11-20 15:31:36,611 - INFO - [AutomCubos] - Descargando a temporal: temp_1763674295_CUBOsector_202516.xlsx ...
+2025-11-20 15:31:37,336 - INFO - [AutomCubos] - -> ÉXITO: Archivo actualizado correctamente en: C:\Users\339302\Documents\Monitor Datos GN W11-dly\app_monitor_metricas_cubos\datos\CUBOsector_202516.xlsx
+2025-11-20 15:31:37,336 - INFO - [AutomCubos] - Buscando reporte para: CUBOgv_202517.xlsx
+2025-11-20 15:31:37,365 - INFO - [AutomCubos] - ¡Coincidencia encontrada para CUBOgv_202517.xlsx! Estado: Disponible para Descarga. Descargando...
+2025-11-20 15:31:38,675 - INFO - [AutomCubos] - Descargando a temporal: temp_1763674297_CUBOgv_202517.xlsx ...
+2025-11-20 15:31:38,870 - INFO - [AutomCubos] - -> ÉXITO: Archivo actualizado correctamente en: C:\Users\339302\Documents\Monitor Datos GN W11-dly\app_monitor_metricas_cubos\datos\CUBOgv_202517.xlsx
+2025-11-20 15:31:38,870 - INFO - [AutomCubos] - Buscando reporte para: CUBOsector_202517.xlsx
+2025-11-20 15:31:38,887 - INFO - [AutomCubos] - ¡Coincidencia encontrada para CUBOsector_202517.xlsx! Estado: Disponible para Descarga. Descargando...
+2025-11-20 15:31:40,251 - INFO - [AutomCubos] - Descargando a temporal: temp_1763674298_CUBOsector_202517.xlsx ...
+2025-11-20 15:31:40,662 - INFO - [AutomCubos] - -> ÉXITO: Archivo actualizado correctamente en: C:\Users\339302\Documents\Monitor Datos GN W11-dly\app_monitor_metricas_cubos\datos\CUBOsector_202517.xlsx
+2025-11-20 15:31:40,662 - INFO - [AutomCubos] - Todos los reportes deseados han sido descargados.
+2025-11-20 15:31:40,662 - INFO - [AutomCubos] - Todas las descargas completadas.
+2025-11-20 15:31:40,662 - INFO - [AutomCubos] - Cerrando el navegador y el contexto...
+2025-11-20 15:31:40,882 - INFO - [AutomCubos] - Navegador cerrado.
+2025-11-20 15:31:41,030 - INFO - [AutomCubos] - 
+--- FASE 3: Finalizando y Actualizando Estado ---
+2025-11-20 15:31:41,030 - INFO - [AutomCubos] - PROCESO EXITOSO. Se descargaron exitosamente los 4 reportes solicitados.
+2025-11-20 15:31:41,032 - INFO - [AutomCubos] - Archivo de estado actualizado en 'C:\Users\339302\Documents\Monitor Datos GN W11-dly\app_monitor_metricas_cubos\datos\update_timestamp.json' con estado: SUCCESS
+2025-11-20 16:00:02,161 - INFO - [AutomCubos] - --- INICIANDO SCRIPT CONSOLIDADO DE SOLICITUD Y DESCARGA ---
+2025-11-20 16:00:02,163 - INFO - [AutomCubos] - Directorio de descargas asegurado en: 'C:\Users\339302\Documents\Monitor Datos GN W11-dly\app_monitor_metricas_cubos\datos'
+2025-11-20 16:00:02,168 - INFO - [AutomCubos] - Ciclos activos detectados: 202516, 202517.
+2025-11-20 16:00:03,971 - INFO - [AutomCubos] - Navegando a la página de inicio: https://commercial.natura.com/
+2025-11-20 16:00:13,900 - INFO - [AutomCubos] - ¡Inicio de sesión exitoso! URL final: https://commercial.natura.com/signIn?code=c4439de0-cbd0-45d3-bdec-4865c91bb422&redirect=%2F%3Fcode%3Dc4439de0-cbd0-45d3-bdec-4865c91bb422
+2025-11-20 16:00:13,900 - INFO - [AutomCubos] - 
+--- FASE 1: Solicitando Reportes ---
+2025-11-20 16:00:22,882 - INFO - [AutomCubos] - Formulario de reportes cargado.
+2025-11-20 16:00:22,882 - INFO - [AutomCubos] - --- Iniciando solicitud para Nivel: 'GV', Ciclo: 202516 ---
+2025-11-20 16:00:33,133 - INFO - [AutomCubos] - Confirmación de éxito recibida.
+2025-11-20 16:00:37,027 - INFO - [AutomCubos] - ¡Solicitud para 'GV' en ciclo 202516 realizada con éxito!
+2025-11-20 16:00:37,027 - INFO - [AutomCubos] - Limpiando el formulario para la siguiente acción.
+2025-11-20 16:00:38,625 - INFO - [AutomCubos] - --- Iniciando solicitud para Nivel: 'Sector', Ciclo: 202516 ---
+2025-11-20 16:00:46,907 - INFO - [AutomCubos] - Confirmación de éxito recibida.
+2025-11-20 16:00:51,310 - INFO - [AutomCubos] - ¡Solicitud para 'Sector' en ciclo 202516 realizada con éxito!
+2025-11-20 16:00:51,310 - INFO - [AutomCubos] - Limpiando el formulario para la siguiente acción.
+2025-11-20 16:00:52,914 - INFO - [AutomCubos] - --- Iniciando solicitud para Nivel: 'GV', Ciclo: 202517 ---
+2025-11-20 16:01:00,140 - INFO - [AutomCubos] - Confirmación de éxito recibida.
+2025-11-20 16:01:04,573 - INFO - [AutomCubos] - ¡Solicitud para 'GV' en ciclo 202517 realizada con éxito!
+2025-11-20 16:01:04,573 - INFO - [AutomCubos] - Limpiando el formulario para la siguiente acción.
+2025-11-20 16:01:06,141 - INFO - [AutomCubos] - --- Iniciando solicitud para Nivel: 'Sector', Ciclo: 202517 ---
+2025-11-20 16:01:13,540 - INFO - [AutomCubos] - Confirmación de éxito recibida.
+2025-11-20 16:01:17,974 - INFO - [AutomCubos] - ¡Solicitud para 'Sector' en ciclo 202517 realizada con éxito!
+2025-11-20 16:01:17,974 - INFO - [AutomCubos] - Limpiando el formulario para la siguiente acción.
+2025-11-20 16:01:19,574 - INFO - [AutomCubos] - 
+--- FASE 2: Descargando Reportes ---
+2025-11-20 16:01:19,585 - INFO - [AutomCubos] - 
+--- Iniciando fase de descarga para los 4 reportes solicitados ---
+2025-11-20 16:01:19,586 - INFO - [AutomCubos] - Intento 1/10: Actualizando y buscando reportes listos...
+2025-11-20 16:01:19,631 - INFO - [AutomCubos] - Buscando reporte para: CUBOgv_202516.xlsx
+2025-11-20 16:01:19,691 - INFO - [AutomCubos] - ¡Coincidencia encontrada para CUBOgv_202516.xlsx! Estado: Disponible para Descarga. Descargando...
+2025-11-20 16:01:24,642 - INFO - [AutomCubos] - Descargando a temporal: temp_1763676079_CUBOgv_202516.xlsx ...
+2025-11-20 16:01:25,097 - INFO - [AutomCubos] - -> ÉXITO: Archivo actualizado correctamente en: C:\Users\339302\Documents\Monitor Datos GN W11-dly\app_monitor_metricas_cubos\datos\CUBOgv_202516.xlsx
+2025-11-20 16:01:25,097 - INFO - [AutomCubos] - Buscando reporte para: CUBOsector_202516.xlsx
+2025-11-20 16:01:25,140 - INFO - [AutomCubos] - ¡Coincidencia encontrada para CUBOsector_202516.xlsx! Estado: Disponible para Descarga. Descargando...
+2025-11-20 16:01:26,926 - INFO - [AutomCubos] - Descargando a temporal: temp_1763676085_CUBOsector_202516.xlsx ...
+2025-11-20 16:01:27,883 - INFO - [AutomCubos] - -> ÉXITO: Archivo actualizado correctamente en: C:\Users\339302\Documents\Monitor Datos GN W11-dly\app_monitor_metricas_cubos\datos\CUBOsector_202516.xlsx
+2025-11-20 16:01:27,883 - INFO - [AutomCubos] - Buscando reporte para: CUBOgv_202517.xlsx
+2025-11-20 16:01:27,915 - INFO - [AutomCubos] - ¡Coincidencia encontrada para CUBOgv_202517.xlsx! Estado: Disponible para Descarga. Descargando...
+2025-11-20 16:01:29,623 - INFO - [AutomCubos] - Descargando a temporal: temp_1763676087_CUBOgv_202517.xlsx ...
+2025-11-20 16:01:29,846 - INFO - [AutomCubos] - -> ÉXITO: Archivo actualizado correctamente en: C:\Users\339302\Documents\Monitor Datos GN W11-dly\app_monitor_metricas_cubos\datos\CUBOgv_202517.xlsx
+2025-11-20 16:01:29,847 - INFO - [AutomCubos] - Buscando reporte para: CUBOsector_202517.xlsx
+2025-11-20 16:01:29,865 - INFO - [AutomCubos] - ¡Coincidencia encontrada para CUBOsector_202517.xlsx! Estado: Disponible para Descarga. Descargando...
+2025-11-20 16:01:31,582 - INFO - [AutomCubos] - Descargando a temporal: temp_1763676089_CUBOsector_202517.xlsx ...
+2025-11-20 16:01:32,151 - INFO - [AutomCubos] - -> ÉXITO: Archivo actualizado correctamente en: C:\Users\339302\Documents\Monitor Datos GN W11-dly\app_monitor_metricas_cubos\datos\CUBOsector_202517.xlsx
+2025-11-20 16:01:32,151 - INFO - [AutomCubos] - Todos los reportes deseados han sido descargados.
+2025-11-20 16:01:32,151 - INFO - [AutomCubos] - Todas las descargas completadas.
+2025-11-20 16:01:32,151 - INFO - [AutomCubos] - Cerrando el navegador y el contexto...
+2025-11-20 16:01:32,390 - INFO - [AutomCubos] - Navegador cerrado.
+2025-11-20 16:01:32,548 - INFO - [AutomCubos] - 
+--- FASE 3: Finalizando y Actualizando Estado ---
+2025-11-20 16:01:32,549 - INFO - [AutomCubos] - PROCESO EXITOSO. Se descargaron exitosamente los 4 reportes solicitados.
+2025-11-20 16:01:32,550 - INFO - [AutomCubos] - Archivo de estado actualizado en 'C:\Users\339302\Documents\Monitor Datos GN W11-dly\app_monitor_metricas_cubos\datos\update_timestamp.json' con estado: SUCCESS
+2025-11-20 16:30:02,696 - INFO - [AutomCubos] - --- INICIANDO SCRIPT CONSOLIDADO DE SOLICITUD Y DESCARGA ---
+2025-11-20 16:30:02,697 - INFO - [AutomCubos] - Directorio de descargas asegurado en: 'C:\Users\339302\Documents\Monitor Datos GN W11-dly\app_monitor_metricas_cubos\datos'
+2025-11-20 16:30:02,703 - INFO - [AutomCubos] - Ciclos activos detectados: 202516, 202517.
+2025-11-20 16:30:04,342 - INFO - [AutomCubos] - Navegando a la página de inicio: https://commercial.natura.com/
+2025-11-20 16:30:14,483 - INFO - [AutomCubos] - ¡Inicio de sesión exitoso! URL final: https://commercial.natura.com/signIn?code=4446bdc9-d1c9-4c16-8889-9d126f14e215&redirect=%2F%3Fcode%3D4446bdc9-d1c9-4c16-8889-9d126f14e215
+2025-11-20 16:30:14,483 - INFO - [AutomCubos] - 
+--- FASE 1: Solicitando Reportes ---
+2025-11-20 16:30:23,894 - INFO - [AutomCubos] - Formulario de reportes cargado.
+2025-11-20 16:30:23,895 - INFO - [AutomCubos] - --- Iniciando solicitud para Nivel: 'GV', Ciclo: 202516 ---
+2025-11-20 16:30:43,970 - INFO - [AutomCubos] - Confirmación de éxito recibida.
+2025-11-20 16:30:47,881 - INFO - [AutomCubos] - ¡Solicitud para 'GV' en ciclo 202516 realizada con éxito!
+2025-11-20 16:30:47,881 - INFO - [AutomCubos] - Limpiando el formulario para la siguiente acción.
+2025-11-20 16:30:49,457 - INFO - [AutomCubos] - --- Iniciando solicitud para Nivel: 'Sector', Ciclo: 202516 ---
+2025-11-20 16:30:58,240 - INFO - [AutomCubos] - Confirmación de éxito recibida.
+2025-11-20 16:31:02,678 - INFO - [AutomCubos] - ¡Solicitud para 'Sector' en ciclo 202516 realizada con éxito!
+2025-11-20 16:31:02,679 - INFO - [AutomCubos] - Limpiando el formulario para la siguiente acción.
+2025-11-20 16:31:04,267 - INFO - [AutomCubos] - --- Iniciando solicitud para Nivel: 'GV', Ciclo: 202517 ---
+2025-11-20 16:31:12,452 - INFO - [AutomCubos] - Confirmación de éxito recibida.
+2025-11-20 16:31:16,874 - INFO - [AutomCubos] - ¡Solicitud para 'GV' en ciclo 202517 realizada con éxito!
+2025-11-20 16:31:16,874 - INFO - [AutomCubos] - Limpiando el formulario para la siguiente acción.
+2025-11-20 16:31:18,437 - INFO - [AutomCubos] - --- Iniciando solicitud para Nivel: 'Sector', Ciclo: 202517 ---
+2025-11-20 16:31:26,125 - INFO - [AutomCubos] - Confirmación de éxito recibida.
+2025-11-20 16:31:30,119 - INFO - [AutomCubos] - ¡Solicitud para 'Sector' en ciclo 202517 realizada con éxito!
+2025-11-20 16:31:30,119 - INFO - [AutomCubos] - Limpiando el formulario para la siguiente acción.
+2025-11-20 16:31:31,784 - INFO - [AutomCubos] - 
+--- FASE 2: Descargando Reportes ---
+2025-11-20 16:31:31,795 - INFO - [AutomCubos] - 
+--- Iniciando fase de descarga para los 4 reportes solicitados ---
+2025-11-20 16:31:31,795 - INFO - [AutomCubos] - Intento 1/10: Actualizando y buscando reportes listos...
+2025-11-20 16:31:31,850 - INFO - [AutomCubos] - Buscando reporte para: CUBOgv_202516.xlsx
+2025-11-20 16:31:31,907 - INFO - [AutomCubos] - ¡Coincidencia encontrada para CUBOgv_202516.xlsx! Estado: Disponible para Descarga. Descargando...
+2025-11-20 16:31:40,037 - INFO - [AutomCubos] - Descargando a temporal: temp_1763677891_CUBOgv_202516.xlsx ...
+2025-11-20 16:31:40,458 - INFO - [AutomCubos] - -> ÉXITO: Archivo actualizado correctamente en: C:\Users\339302\Documents\Monitor Datos GN W11-dly\app_monitor_metricas_cubos\datos\CUBOgv_202516.xlsx
+2025-11-20 16:31:40,458 - INFO - [AutomCubos] - Buscando reporte para: CUBOsector_202516.xlsx
+2025-11-20 16:31:40,501 - INFO - [AutomCubos] - ¡Coincidencia encontrada para CUBOsector_202516.xlsx! Estado: Disponible para Descarga. Descargando...
+2025-11-20 16:31:42,327 - INFO - [AutomCubos] - Descargando a temporal: temp_1763677900_CUBOsector_202516.xlsx ...
+2025-11-20 16:31:43,230 - INFO - [AutomCubos] - -> ÉXITO: Archivo actualizado correctamente en: C:\Users\339302\Documents\Monitor Datos GN W11-dly\app_monitor_metricas_cubos\datos\CUBOsector_202516.xlsx
+2025-11-20 16:31:43,231 - INFO - [AutomCubos] - Buscando reporte para: CUBOgv_202517.xlsx
+2025-11-20 16:31:43,260 - INFO - [AutomCubos] - ¡Coincidencia encontrada para CUBOgv_202517.xlsx! Estado: Disponible para Descarga. Descargando...
+2025-11-20 16:31:45,084 - INFO - [AutomCubos] - Descargando a temporal: temp_1763677903_CUBOgv_202517.xlsx ...
+2025-11-20 16:31:45,297 - INFO - [AutomCubos] - -> ÉXITO: Archivo actualizado correctamente en: C:\Users\339302\Documents\Monitor Datos GN W11-dly\app_monitor_metricas_cubos\datos\CUBOgv_202517.xlsx
+2025-11-20 16:31:45,297 - INFO - [AutomCubos] - Buscando reporte para: CUBOsector_202517.xlsx
+2025-11-20 16:31:45,314 - INFO - [AutomCubos] - ¡Coincidencia encontrada para CUBOsector_202517.xlsx! Estado: Disponible para Descarga. Descargando...
+2025-11-20 16:31:47,309 - INFO - [AutomCubos] - Descargando a temporal: temp_1763677905_CUBOsector_202517.xlsx ...
+2025-11-20 16:31:47,874 - INFO - [AutomCubos] - -> ÉXITO: Archivo actualizado correctamente en: C:\Users\339302\Documents\Monitor Datos GN W11-dly\app_monitor_metricas_cubos\datos\CUBOsector_202517.xlsx
+2025-11-20 16:31:47,874 - INFO - [AutomCubos] - Todos los reportes deseados han sido descargados.
+2025-11-20 16:31:47,874 - INFO - [AutomCubos] - Todas las descargas completadas.
+2025-11-20 16:31:47,874 - INFO - [AutomCubos] - Cerrando el navegador y el contexto...
+2025-11-20 16:31:48,094 - INFO - [AutomCubos] - Navegador cerrado.
+2025-11-20 16:31:48,263 - INFO - [AutomCubos] - 
+--- FASE 3: Finalizando y Actualizando Estado ---
+2025-11-20 16:31:48,263 - INFO - [AutomCubos] - PROCESO EXITOSO. Se descargaron exitosamente los 4 reportes solicitados.
+2025-11-20 16:31:48,265 - INFO - [AutomCubos] - Archivo de estado actualizado en 'C:\Users\339302\Documents\Monitor Datos GN W11-dly\app_monitor_metricas_cubos\datos\update_timestamp.json' con estado: SUCCESS
+2025-11-20 17:00:02,646 - INFO - [AutomCubos] - --- INICIANDO SCRIPT CONSOLIDADO DE SOLICITUD Y DESCARGA ---
+2025-11-20 17:00:02,648 - INFO - [AutomCubos] - Directorio de descargas asegurado en: 'C:\Users\339302\Documents\Monitor Datos GN W11-dly\app_monitor_metricas_cubos\datos'
+2025-11-20 17:00:02,655 - INFO - [AutomCubos] - Ciclos activos detectados: 202516, 202517.
+2025-11-20 17:00:04,708 - INFO - [AutomCubos] - Navegando a la página de inicio: https://commercial.natura.com/
+2025-11-20 17:00:14,906 - INFO - [AutomCubos] - ¡Inicio de sesión exitoso! URL final: https://commercial.natura.com/signIn?code=3f6e529c-f3e7-45f4-9e9e-9e23a79ad515&redirect=%2F%3Fcode%3D3f6e529c-f3e7-45f4-9e9e-9e23a79ad515
+2025-11-20 17:00:14,906 - INFO - [AutomCubos] - 
+--- FASE 1: Solicitando Reportes ---
+2025-11-20 17:00:23,235 - INFO - [AutomCubos] - Formulario de reportes cargado.
+2025-11-20 17:00:23,235 - INFO - [AutomCubos] - --- Iniciando solicitud para Nivel: 'GV', Ciclo: 202516 ---
+2025-11-20 17:00:39,851 - INFO - [AutomCubos] - Confirmación de éxito recibida.
+2025-11-20 17:00:43,777 - INFO - [AutomCubos] - ¡Solicitud para 'GV' en ciclo 202516 realizada con éxito!
+2025-11-20 17:00:43,777 - INFO - [AutomCubos] - Limpiando el formulario para la siguiente acción.
+2025-11-20 17:00:45,373 - INFO - [AutomCubos] - --- Iniciando solicitud para Nivel: 'Sector', Ciclo: 202516 ---
+2025-11-20 17:00:51,604 - INFO - [AutomCubos] - Confirmación de éxito recibida.
+2025-11-20 17:00:55,535 - INFO - [AutomCubos] - ¡Solicitud para 'Sector' en ciclo 202516 realizada con éxito!
+2025-11-20 17:00:55,536 - INFO - [AutomCubos] - Limpiando el formulario para la siguiente acción.
+2025-11-20 17:00:57,136 - INFO - [AutomCubos] - --- Iniciando solicitud para Nivel: 'GV', Ciclo: 202517 ---
+2025-11-20 17:01:03,258 - INFO - [AutomCubos] - Confirmación de éxito recibida.
+2025-11-20 17:01:07,173 - INFO - [AutomCubos] - ¡Solicitud para 'GV' en ciclo 202517 realizada con éxito!
+2025-11-20 17:01:07,173 - INFO - [AutomCubos] - Limpiando el formulario para la siguiente acción.
+2025-11-20 17:01:08,758 - INFO - [AutomCubos] - --- Iniciando solicitud para Nivel: 'Sector', Ciclo: 202517 ---
+2025-11-20 17:01:16,084 - INFO - [AutomCubos] - Confirmación de éxito recibida.
+2025-11-20 17:01:20,527 - INFO - [AutomCubos] - ¡Solicitud para 'Sector' en ciclo 202517 realizada con éxito!
+2025-11-20 17:01:20,528 - INFO - [AutomCubos] - Limpiando el formulario para la siguiente acción.
+2025-11-20 17:01:22,129 - INFO - [AutomCubos] - 
+--- FASE 2: Descargando Reportes ---
+2025-11-20 17:01:22,140 - INFO - [AutomCubos] - 
+--- Iniciando fase de descarga para los 4 reportes solicitados ---
+2025-11-20 17:01:22,141 - INFO - [AutomCubos] - Intento 1/10: Actualizando y buscando reportes listos...
+2025-11-20 17:01:22,184 - INFO - [AutomCubos] - Buscando reporte para: CUBOgv_202516.xlsx
+2025-11-20 17:01:22,243 - INFO - [AutomCubos] - ¡Coincidencia encontrada para CUBOgv_202516.xlsx! Estado: Disponible para Descarga. Descargando...
+2025-11-20 17:01:28,763 - INFO - [AutomCubos] - Descargando a temporal: temp_1763679682_CUBOgv_202516.xlsx ...
+2025-11-20 17:01:29,159 - INFO - [AutomCubos] - -> ÉXITO: Archivo actualizado correctamente en: C:\Users\339302\Documents\Monitor Datos GN W11-dly\app_monitor_metricas_cubos\datos\CUBOgv_202516.xlsx
+2025-11-20 17:01:29,159 - INFO - [AutomCubos] - Buscando reporte para: CUBOsector_202516.xlsx
+2025-11-20 17:01:29,201 - INFO - [AutomCubos] - ¡Coincidencia encontrada para CUBOsector_202516.xlsx! Estado: Disponible para Descarga. Descargando...
+2025-11-20 17:01:30,628 - INFO - [AutomCubos] - Descargando a temporal: temp_1763679689_CUBOsector_202516.xlsx ...
+2025-11-20 17:01:31,510 - INFO - [AutomCubos] - -> ÉXITO: Archivo actualizado correctamente en: C:\Users\339302\Documents\Monitor Datos GN W11-dly\app_monitor_metricas_cubos\datos\CUBOsector_202516.xlsx
+2025-11-20 17:01:31,510 - INFO - [AutomCubos] - Buscando reporte para: CUBOgv_202517.xlsx
+2025-11-20 17:01:31,540 - INFO - [AutomCubos] - ¡Coincidencia encontrada para CUBOgv_202517.xlsx! Estado: Disponible para Descarga. Descargando...
+2025-11-20 17:01:32,847 - INFO - [AutomCubos] - Descargando a temporal: temp_1763679691_CUBOgv_202517.xlsx ...
+2025-11-20 17:01:33,029 - INFO - [AutomCubos] - -> ÉXITO: Archivo actualizado correctamente en: C:\Users\339302\Documents\Monitor Datos GN W11-dly\app_monitor_metricas_cubos\datos\CUBOgv_202517.xlsx
+2025-11-20 17:01:33,029 - INFO - [AutomCubos] - Buscando reporte para: CUBOsector_202517.xlsx
+2025-11-20 17:01:33,046 - INFO - [AutomCubos] - ¡Coincidencia encontrada para CUBOsector_202517.xlsx! Estado: Disponible para Descarga. Descargando...
+2025-11-20 17:01:34,787 - INFO - [AutomCubos] - Descargando a temporal: temp_1763679693_CUBOsector_202517.xlsx ...
+2025-11-20 17:01:35,329 - INFO - [AutomCubos] - -> ÉXITO: Archivo actualizado correctamente en: C:\Users\339302\Documents\Monitor Datos GN W11-dly\app_monitor_metricas_cubos\datos\CUBOsector_202517.xlsx
+2025-11-20 17:01:35,329 - INFO - [AutomCubos] - Todos los reportes deseados han sido descargados.
+2025-11-20 17:01:35,329 - INFO - [AutomCubos] - Todas las descargas completadas.
+2025-11-20 17:01:35,330 - INFO - [AutomCubos] - Cerrando el navegador y el contexto...
+2025-11-20 17:01:35,575 - INFO - [AutomCubos] - Navegador cerrado.
+2025-11-20 17:01:35,717 - INFO - [AutomCubos] - 
+--- FASE 3: Finalizando y Actualizando Estado ---
+2025-11-20 17:01:35,718 - INFO - [AutomCubos] - PROCESO EXITOSO. Se descargaron exitosamente los 4 reportes solicitados.
+2025-11-20 17:01:35,720 - INFO - [AutomCubos] - Archivo de estado actualizado en 'C:\Users\339302\Documents\Monitor Datos GN W11-dly\app_monitor_metricas_cubos\datos\update_timestamp.json' con estado: SUCCESS

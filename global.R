@@ -1,6 +1,5 @@
 # --- 1. Cargar las librerías necesarias ---
 library(shiny)
-library(here)
 library(DT)
 library(readxl)
 library(dplyr)
@@ -14,58 +13,15 @@ library(shinycssloaders)
 library(jsonlite)
 library(htmltools) 
 library(writexl)
-
-leer_excel_seguro <- function(ruta_archivo, ...) {
-  
-  # 1. Verificar existencia
-  if (!file.exists(ruta_archivo)) {
-    stop(paste("ERROR CRÍTICO: El archivo no existe:", ruta_archivo))
-  }
-  
-  # 2. Definir ruta temporal (en la carpeta temporal del sistema)
-  # Usamos basename para mantener el nombre pero en una carpeta segura
-  archivo_temp <- file.path(tempdir(), paste0("temp_", basename(ruta_archivo)))
-  
-  # 3. Intentar copiar el archivo (Bucle de reintento)
-  intentos <- 0
-  max_intentos <- 5
-  copiado <- FALSE
-  
-  while(intentos < max_intentos && !copiado) {
-    tryCatch({
-      # file.copy devuelve TRUE si tuvo éxito
-      if (file.copy(from = ruta_archivo, to = archivo_temp, overwrite = TRUE)) {
-        copiado <- TRUE
-      } else {
-        stop("Fallo en file.copy sin error explícito")
-      }
-    }, warning = function(w) {
-      message(paste("Advertencia copiando (intento", intentos + 1, "):", w$message))
-    }, error = function(e) {
-      message(paste("Archivo bloqueado o error (intento", intentos + 1, "):", e$message))
-    })
-    
-    if (!copiado) {
-      Sys.sleep(1) # Esperar 1 segundo antes de reintentar
-      intentos <- intentos + 1
-    }
-  }
-  
-  if (!copiado) {
-    stop("No se pudo acceder al archivo Excel después de 5 intentos. El Scraper podría estar escribiendo.")
-  }
-
-    # 4. Asegurar limpieza: Borrar el temporal al salir de la función (éxito o error)
-  on.exit(try(unlink(archivo_temp), silent = TRUE), add = TRUE)
-  
-  # 5. Leer la copia temporal
-  # Pasamos '...' para permitir argumentos como sheet = "CUBO"
-  datos <- readxl::read_excel(archivo_temp, ...)
-  
-  return(datos)
-}
+library(here)
 
 
+
+
+
+# ruta_archivo_pais <- "G:/Unidades compartidas/Monitor Métricas GV/datos/CUBOgv.xlsx"
+# ruta_archivo_sector <- "G:/Unidades compartidas/Monitor Métricas GV/datos/CUBOsector.xlsx"
+# ruta_json <- "G:/Unidades compartidas/Monitor Métricas GV/datos/update_timestamp.json"
 
 ruta_carpeta_datos <- here::here("datos")
 
@@ -109,24 +65,24 @@ message("Cargando datos de sector desde: ", ruta_archivo_sector)
 message("Cargando timestamp desde: ", ruta_json)
 
 
+division_segura <- function(numerador,denominador){
+  if_else(
+    is.na(denominador) | denominador ==0 | is.infinite(denominador),
+    0,
+    numerador / denominador
+  )
+}
 
 
-# Sustituimos read_excel por leer_excel_seguro
-cubo_pais_df_raw <- leer_excel_seguro(ruta_archivo_pais, sheet = "CUBO") %>% 
+
+cubo_pais_df_raw <- read_excel(ruta_archivo_pais, sheet = "CUBO") %>% 
   filter(grepl("GV [0-9]{1,2}", `Nombre GV`))
-cubo_sector_df_raw <- leer_excel_seguro(ruta_archivo_sector, sheet = "CUBO") %>% 
+cubo_sector_df_raw <- read_excel(ruta_archivo_sector, sheet = "CUBO") %>% 
   filter(grepl("GV[0-9]{1,2}", `Nombre Sector`))
-message("--- CARGA COMPLETADA ---")
-
-
-
 
 # Ahora sí puedes ejecutar grep sobre los dataframes que ya existen en memoria
 names_gerencias <- grep("GV [0-9]{1,2}", unique(cubo_pais_df_raw$`Nombre GV`), value = TRUE)
 names_sectores <- grep("GV[0-9]{1,2}", unique(cubo_sector_df_raw$`Nombre Sector`), value = TRUE)
-
-
-
 
 theme_natura <- bslib::bs_theme(
   version = 5,
@@ -188,62 +144,53 @@ tabla_inactividad_equipos <- cubo_pais_agregado %>%
     Inact_Real_3 = `Inactiva 3 Real`, Inact_2 = `Inactiva 2 Real`, Inact_1 = `Inactiva 1 Real`
   ) %>%
   mutate(
-    Porc_Inact_3 = Inact_Real_3 / Disp_Real_C7,
-    Porc_Inact_2 = Inact_2 / Disp_Real_C7,
-    Porc_Inact_1 = Inact_1 / Disp_Real_C7
+    Porc_Inact_3 = division_segura(Inact_Real_3, Disp_Real_C7),
+    Porc_Inact_2 = division_segura(Inact_2, Disp_Real_C7),
+    Porc_Inact_1 = division_segura(Inact_1, Disp_Real_C7)
   )
 total_inactividad <- tabla_inactividad_equipos %>%
   summarise(
     GV = NA, Equipo = "TOTAL PAIS", across(where(is.numeric), ~sum(., na.rm = TRUE))
   ) %>%
   mutate(
-    Porc_Inact_3 = Inact_Real_3 / Disp_Real_C7, Porc_Inact_2 = Inact_2 / Disp_Real_C7,
-    Porc_Inact_1 = Inact_1 / Disp_Real_C7
+    Porc_Inact_3 = division_segura(Inact_Real_3, Disp_Real_C7),
+    Porc_Inact_2 = division_segura(Inact_2, Disp_Real_C7),
+    Porc_Inact_1 = division_segura(Inact_1, Disp_Real_C7)
   )
 tabla_inactividad <- bind_rows(tabla_inactividad_equipos, total_inactividad)
+
 
 # Tabla 2: Operaciones
 tabla_disponibles_equipos <- cubo_pais_agregado %>%
   select(
     GV = `Código GV`, Equipo = `Nombre GV`,
-    
-    Disp_Meta = `Disponibles Meta`, 
-    Disp_Real = `Disponibles Real`,
-    
-    Saldo_Meta = `Saldo Disponibles Meta`, 
-    Saldo_Real = `Saldo Disponibles Real`,
-    
-    Inicios_Meta = `Inicios + Reinicios Meta`, 
-    Inicios_Real = `Inicios + Reinicios Real`,
-    
-    Recuperos_Meta = `Recuperos Meta`, 
-    Recuperos_Real = `Recuperos Real`
+    Disp_Meta = `Disponibles Meta`, Disp_Real = `Disponibles Real`,
+    Saldo_Meta = `Saldo Disponibles Meta`, Saldo_Real = `Saldo Disponibles Real`,
+    Inicios_Meta = `Inicios + Reinicios Meta`, Inicios_Real = `Inicios + Reinicios Real`,
+    Recuperos_Meta = `Recuperos Meta`, Recuperos_Real = `Recuperos Real`
   ) %>%
   mutate(
-    Disp_Alcanz = Disp_Real / Disp_Meta, 
-    Saldo_Alcanz = Saldo_Real / Saldo_Meta,
-    
-    Inicios_Cump = Inicios_Real / Inicios_Meta, 
-    Inicios_vs_Disp = Inicios_Real / Disp_Real,
-    
-    Recuperos_Cump = Recuperos_Real / Recuperos_Meta, 
-    Recuperos_vs_Disp = Recuperos_Real / Disp_Real
+    Disp_Alcanz     = division_segura(Disp_Real, Disp_Meta),
+    Saldo_Alcanz    = division_segura(Saldo_Real, Saldo_Meta),
+    Inicios_Cump    = division_segura(Inicios_Real, Inicios_Meta),
+    Inicios_vs_Disp = division_segura(Inicios_Real, Disp_Real),
+    Recuperos_Cump  = division_segura(Recuperos_Real, Recuperos_Meta),
+    Recuperos_vs_Disp = division_segura(Recuperos_Real, Disp_Real)
   )
 total_disponibles <- tabla_disponibles_equipos %>%
   summarise(
     GV = NA, Equipo = "TOTAL PAIS", across(where(is.numeric), ~sum(., na.rm = TRUE))
   ) %>%
   mutate(
-    Disp_Alcanz = Disp_Real / Disp_Meta, 
-    Saldo_Alcanz = Saldo_Real / Saldo_Meta,
-    
-    Inicios_Cump = Inicios_Real / Inicios_Meta, 
-    Inicios_vs_Disp = Inicios_Real / Disp_Real,
-    
-    Recuperos_Cump = Recuperos_Real / Recuperos_Meta, 
-    Recuperos_vs_Disp = Recuperos_Real / Disp_Real
+    Disp_Alcanz     = division_segura(Disp_Real, Disp_Meta),
+    Saldo_Alcanz    = division_segura(Saldo_Real, Saldo_Meta),
+    Inicios_Cump    = division_segura(Inicios_Real, Inicios_Meta),
+    Inicios_vs_Disp = division_segura(Inicios_Real, Disp_Real),
+    Recuperos_Cump  = division_segura(Recuperos_Real, Recuperos_Meta),
+    Recuperos_vs_Disp = division_segura(Recuperos_Real, Disp_Real)
   )
 tabla_disponibles <- bind_rows(tabla_disponibles_equipos, total_disponibles)
+
 
 # Tabla 3: Actividad
 tabla_actividad_equipos <- cubo_pais_agregado %>%
@@ -254,10 +201,13 @@ tabla_actividad_equipos <- cubo_pais_agregado %>%
     Act_Frec_Porc_Real = `% Actividad Frecuente Real`, Disp_Real = `Disponibles Real`
   ) %>%
   mutate(
-    Actividad_Porc_Meta = Actividad_Porc_Meta / 100, Act_Frec_Porc_Meta = Act_Frec_Porc_Meta / 100,
-    Act_Frec_Porc_Real = Act_Frec_Porc_Real / 100, Actividad_Porc_Real = Activas_Real / Disp_Real,
-    Actividad_Porc_Alcanz = Actividad_Porc_Real / Actividad_Porc_Meta, Activas_Alcanz = Activas_Real / Activas_Meta,
-    Act_Frec_Porc_Alcanz = Act_Frec_Porc_Real / Act_Frec_Porc_Meta
+    Actividad_Porc_Meta = Actividad_Porc_Meta / 100, 
+    Act_Frec_Porc_Meta = Act_Frec_Porc_Meta / 100,
+    Act_Frec_Porc_Real = Act_Frec_Porc_Real / 100,
+    Actividad_Porc_Real = division_segura(Activas_Real, Disp_Real),
+    Actividad_Porc_Alcanz = division_segura(Actividad_Porc_Real, Actividad_Porc_Meta),
+    Activas_Alcanz = division_segura(Activas_Real, Activas_Meta),
+    Act_Frec_Porc_Alcanz = division_segura(Act_Frec_Porc_Real, Act_Frec_Porc_Meta)
   ) %>%
   select(-Disp_Real)
 total_actividad <- tabla_actividad_equipos %>%
@@ -274,12 +224,12 @@ tabla_productividad_equipos <- cubo_pais_agregado %>%
     Prod_Dolar_Real = `Productividad Real`, Fact_Meta = `Facturación Total Meta`,
     Fact_Real = `Facturación Total Real`
   ) %>%
-  mutate(Fact_Alcanz = Fact_Real / Fact_Meta)
+  mutate(Fact_Alcanz = division_segura(Fact_Real, Fact_Meta))
 total_productividad <- tabla_productividad_equipos %>%
   summarise(
     GV = NA, Equipo = "TOTAL PAIS", across(where(is.numeric), ~sum(., na.rm = TRUE))
   ) %>%
-  mutate(Fact_Alcanz = Fact_Real / Fact_Meta)
+  mutate(Fact_Alcanz = division_segura(Fact_Real, Fact_Meta))
 tabla_productividad <- bind_rows(tabla_productividad_equipos, total_productividad)
 
 
@@ -488,3 +438,30 @@ estructura_columnas <- list(
 )
 
 choices_virtual_select <- estructura_columnas
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
