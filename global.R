@@ -18,11 +18,6 @@ library(here)
 
 
 
-
-# ruta_archivo_pais <- "G:/Unidades compartidas/Monitor Métricas GV/datos/CUBOgv.xlsx"
-# ruta_archivo_sector <- "G:/Unidades compartidas/Monitor Métricas GV/datos/CUBOsector.xlsx"
-# ruta_json <- "G:/Unidades compartidas/Monitor Métricas GV/datos/update_timestamp.json"
-
 ruta_carpeta_datos <- here::here("datos")
 
 # 2. Encontrar el archivo de CUBOgv más reciente
@@ -107,10 +102,14 @@ theme_natura <- bslib::bs_theme(
   
   # 4. Ajustes a Componentes Específicos
   # ---------------------------------------------------
-  "navbar-bg" = "#FFFFFF", 
-  "navbar-light-color" = "#2E2D2C",
+  "navbar-bg" = "#013731", 
+  "navbar-light-color" = "#E1D1C1",
   "navbar-light-hover-color" = "#FF9526",
   "navbar-light-active-color" = "#FF9526",
+  
+  # "bslib-sidebar-bg" = "#00000017",
+  
+  
   "link-color" = "#FF9526",
   "link-hover-color" = "#CF3100" # Naranja oscuro al pasar el mouse
 )

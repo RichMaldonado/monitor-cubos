@@ -70,7 +70,7 @@ server <- function(input, output, session) {
   
   output$last_updated_display <- renderUI({
     tags$div(
-      style = "font-size: 0.8em; color: #FFFFFF; text-align: right; padding-top: 10px;",
+      style = "font-size: 0.8em; color: #E1D1C1; text-align: right; padding-top: 10px;",
       icon("clock"), 
       "Última actualización:",
       tags$strong(paste("", timestamp_val_fijo)) 
