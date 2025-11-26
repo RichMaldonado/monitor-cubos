@@ -62,14 +62,17 @@ mod_sectores_ui <- function(id) {
 # ------------------------------------
 # --      Función del Servidor      --
 # ------------------------------------
-mod_sectores_server <- function(id, datos) {
+mod_sectores_server <- function(id, datos, lista_gvs) {
   
   moduleServer(id, function(input, output, session) {
     
     # --- 1. Actualizar Filtros al Cargar Datos Nuevos ---
     observe({
       req(datos())
+      
+
       df <- datos()
+      lista_gvs = lista_gvs()
       todos_sectores <- unique(df$Sector)
       
       # Regex para encontrar GVs (ej. "GV 15", "GV15")
@@ -83,8 +86,8 @@ mod_sectores_server <- function(id, datos) {
       shinyWidgets::updatePickerInput(
         session = session,
         inputId = "pkr_gv_sector",
-        choices = nombres_gvs,
-        selected = nombres_gvs 
+        choices = lista_gvs,
+        selected = lista_gvs 
       )
     })
     
@@ -104,7 +107,6 @@ mod_sectores_server <- function(id, datos) {
         if (length(numeros_gv) == 0) {
           sectores_filtrados <- character(0)
         } else {
-          # Mejora sugerida: Usar boundary \\b para evitar falsos positivos (ej GV 1 vs GV 10)
           patron <- paste0("GV\\s?(", paste(numeros_gv, collapse = "|"), ")")
           sectores_filtrados <- nombres_sectores_raw[grepl(patron, nombres_sectores_raw)]
         }
@@ -116,6 +118,7 @@ mod_sectores_server <- function(id, datos) {
         choices = sort(unique(sectores_filtrados)),
         selected = sort(unique(sectores_filtrados))
       )
+      
     }, ignoreNULL = FALSE)
     
     # --- 3. Dataset Reactivo Final ---
@@ -131,7 +134,7 @@ mod_sectores_server <- function(id, datos) {
       df_base <- datos_filtrados_sector()
       cols_seleccionadas <- input$columnas_seleccionadas
       
-      # === VALIDACIÓN DE COLUMNAS (NUEVO) ===
+      # === VALIDACIÓN DE COLUMNAS ===
       # Verificamos qué columnas seleccionadas NO existen en el dataset
       cols_faltantes <- setdiff(cols_seleccionadas, names(df_base))
       
@@ -144,7 +147,7 @@ mod_sectores_server <- function(id, datos) {
       
       req(length(cols_seleccionadas) > 0) # Detener si no quedan columnas válidas
       
-      # === SELECCIÓN DE DATOS (MODIFICADO) ===
+      # === SELECCIÓN DE DATOS ===
       # Quitamos "%Sect /GV" y usamos any_of para seguridad
       datos_mostrados <- df_base %>%
         dplyr::select(

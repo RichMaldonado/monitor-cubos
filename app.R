@@ -103,6 +103,25 @@ server <- function(input, output, session) {
     tryCatch({ leer_excel_raw(ruta) }, error = function(e) { NULL })
   })
   
+  list_gv_raw_reactivos <- reactive({
+    req(input$ciclo_seleccionado)
+    ruta <- here::here("datos", paste0("CUBOgv_", input$ciclo_seleccionado, ".xlsx"))
+    tryCatch({
+      dta_gv <- leer_excel_raw(ruta)
+      }, error = function(e) { NULL })
+    
+    dta_gv_filtrado <- dta_gv %>%
+      filter(
+        str_detect(`Nombre GV`, "GV"),
+        `Nombre GV` != "BAILES S230 GV16"
+        )
+    
+    list <- unique(dta_gv_filtrado$`Nombre GV`)
+    
+    return(list)
+    
+  })
+  
   datos_sector_raw_reactivos <- reactive({
     req(input$ciclo_seleccionado)
     ruta <- here::here("datos", paste0("CUBOsector_", input$ciclo_seleccionado, ".xlsx"))
@@ -114,7 +133,7 @@ server <- function(input, output, session) {
   
   # Módulos de reporte (usan datos procesados)
   mod_gerencia_ventas_server("gerencia_ventas", datos = datos_gv_procesados)
-  mod_sectores_server("sectores", datos = datos_sectores_procesados)
+  mod_sectores_server("sectores", datos = datos_sectores_procesados, lista_gvs = list_gv_raw_reactivos)
   
   # Módulo de Datos Crudos (usa datos raw)
   mod_data_raw_server("data_raw", 
