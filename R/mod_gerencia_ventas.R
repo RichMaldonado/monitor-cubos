@@ -6,6 +6,8 @@
 mod_gerencia_ventas_ui <- function(id) {
   ns <- NS(id)
   
+  # Ya no necesitas definir las listas ni la función aquí dentro.
+  
   layout_sidebar(
     sidebar = sidebar(
       title = "Reportes de Gerencia",
@@ -18,41 +20,57 @@ mod_gerencia_ventas_ui <- function(id) {
       )
     ),
     
-    
+    # --- Panel Inactividad ---
     conditionalPanel(
       condition = paste0("input['", ns("gerencia_nav"), "'] == 'panel_inactividad'"),
-      div(style = "display: flex; justify-content: space-between; align-items: center;",
+      div(style = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 0px;",
           h4("Reporte de Inactividad"),
           downloadButton(ns("descargar_inactividad"), "Descargar Reporte", class = "btn-success btn-sm")
       ),
-      shinycssloaders::withSpinner(DTOutput(ns("tabla_inactividad")))
+      # Usas la variable global directmente
+      crear_leyenda(leyenda_inactividad),
+      shinycssloaders::withSpinner(DTOutput(ns("tabla_inactividad"))),
+      tags$small(style = "color: #666; font-style: italic;",
+                 "* Los colores se asignan según el desempeño relativo (cuartiles) del año en curso.")
     ),
     
+    # --- Panel Operaciones ---
     conditionalPanel(
       condition = paste0("input['", ns("gerencia_nav"), "'] == 'panel_operaciones'"),
-      div(style = "display: flex; justify-content: space-between; align-items: center;",
+      div(style = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 0px;",
           h4("Disponibles, Saldos, Inicios y Recuperos"),
           downloadButton(ns("descargar_operaciones"), "Descargar Reporte", class = "btn-success btn-sm")
       ),
-      shinycssloaders::withSpinner(DTOutput(ns("tabla_disponibles")))
+      crear_leyenda(leyenda_operaciones),
+      shinycssloaders::withSpinner(DTOutput(ns("tabla_disponibles"))),
+      tags$small(style = "color: #666; font-style: italic;",
+                 "* Los colores se asignan según el desempeño relativo (cuartiles) del año en curso.")
     ),
     
+    # --- Panel Actividad ---
     conditionalPanel(
       condition = paste0("input['", ns("gerencia_nav"), "'] == 'panel_actividad'"),
-      div(style = "display: flex; justify-content: space-between; align-items: center;",
+      div(style = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 0px;",
           h4("Reporte de Actividad"),
           downloadButton(ns("descargar_actividad"), "Descargar Reporte", class = "btn-success btn-sm")
       ),
-      shinycssloaders::withSpinner(DTOutput(ns("tabla_actividad")))
+      crear_leyenda(leyenda_actividad),
+      shinycssloaders::withSpinner(DTOutput(ns("tabla_actividad"))),
+      tags$small(style = "color: #666; font-style: italic;",
+                 "* Los colores se asignan según el desempeño relativo (cuartiles) del año en curso.")
     ),
     
+    # --- Panel Productividad ---
     conditionalPanel(
       condition = paste0("input['", ns("gerencia_nav"), "'] == 'panel_productividad'"),
-      div(style = "display: flex; justify-content: space-between; align-items: center;",
+      div(style = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 0px;",
           h4("Productividad y Facturación"),
           downloadButton(ns("descargar_productividad"), "Descargar Reporte", class = "btn-success btn-sm")
       ),
-      shinycssloaders::withSpinner(DTOutput(ns("tabla_productividad")))
+      crear_leyenda(leyenda_productividad),
+      shinycssloaders::withSpinner(DTOutput(ns("tabla_productividad"))),
+      tags$small(style = "color: #666; font-style: italic;",
+                 "* Los colores se asignan según el desempeño relativo (cuartiles) del año en curso.")
     )
   )
 }
@@ -61,17 +79,15 @@ mod_gerencia_ventas_ui <- function(id) {
 # ------------------------------------
 # --      Función del Servidor      --
 # ------------------------------------
-mod_gerencia_ventas_server <- function(id, datos) {
+mod_gerencia_ventas_server <- function(id, datos, lista_gvs) {
   
   moduleServer(id, function(input, output, session) {
     
     # --- TABLA 1: INACTIVIDAD ---
     output$tabla_inactividad <- renderDT({
-      # 1. Obtener datos reactivos
       d <- datos()
-      req(d) # Detener si aún no cargan los datos
+      req(d) 
       
-      # Usamos d$inactividad en lugar de la variable global
       tabla_inactividad_display <- d$inactividad %>% 
         select(GV, Equipo, 
                Disp_Real_C7_1 = Disp_Real_C7, Inact_Real_3, Porc_Inact_3, 
@@ -97,17 +113,59 @@ mod_gerencia_ventas_server <- function(id, datos) {
                               )
       ))
       
-      brks_inact3 <- c(0.04, 0.06, 0.08); clrs_inact3 <- c("#d4edda", "#fff3cd", "#fd7e14", "#dc3545")
-      brks_inact21 <- c(0.25, 0.35, 0.45); clrs_inact21 <- c("#d4edda", "#fff3cd", "#fd7e14", "#dc3545")
+      # --- DEFINICIÓN DE COLORES ---
+      # Verde, Amarillo, Naranja, Rojo
+      clrs_semaforo <- c("#e2f5e8", "#fff9e3", "#ffdca8", "#f8ccd1")
       
-      datatable(tabla_inactividad_display, container = sketch, rownames = FALSE, 
-                options = list(pageLength = 20, scrollX = TRUE, language = opciones_espanol,
-                               columnDefs = list(list(orderable = FALSE, targets = c(4, 7))))) %>%
+      # --- CÁLCULO DE CORTES (Breaks) ---
+      
+      # 1. Porc_Inact_3 (Año actual: Min 6.2% - Max 12.1%)
+      # Históricamente esto rondaba el 6%. El año actual está peor.
+      # Verde: < 8% (Premia a los equipos que se acercan al histórico)
+      # Amarillo: 8% - 9.5% (Por debajo de la media actual de 9.6%)
+      # Naranja: 9.5% - 11% (Por encima de la media, alerta)
+      # Rojo: > 11% (Casos críticos actuales)
+      brks_inact3 <- c(0.08, 0.095, 0.11) 
+      
+      # 2. Porc_Inact_2 (Año actual: Min 9.7% - Max 15.2%)
+      # Históricamente rondaba el 10%.
+      # Verde: < 11.5% (Premia al cuartil superior actual)
+      # Amarillo: 11.5% - 13.0% (Hasta la media actual)
+      # Naranja: 13.0% - 14.0% (Tercer cuartil)
+      # Rojo: > 14.0% (El 25% peor de la tabla actual)
+      brks_inact2 <- c(0.115, 0.13, 0.14)
+      
+      # 3. Porc_Inact_1 (Año actual: Min 36% - Max 64%)
+      # ANOMALÍA: Al no cerrar el año, estos valores son altísimos (Media 55% vs Histórico 14%).
+      # No podemos usar históricos. Usamos distribución relativa actual.
+      # Verde: < 45% (Solo para los equipos excepcionales este año)
+      # Amarillo: 45% - 55% (Rango "Normal" hasta la media)
+      # Naranja: 55% - 60% (Rango preocupante, hasta el 3er cuartil)
+      # Rojo: > 60% (Los casos más extremos del año en curso)
+      brks_inact1 <- c(0.45, 0.55, 0.60)
+      
+      datatable(tabla_inactividad_display, 
+                container = sketch, 
+                rownames = FALSE,
+                extensions = 'FixedColumns',  
+                options = list(
+                  pageLength = 10, 
+                  language = opciones_espanol,
+                  columnDefs = list(list(orderable = FALSE, targets = c(4, 7))),
+                  
+                  scrollX = TRUE,              
+                  scrollY = "600px",           
+                  scrollCollapse = TRUE,       
+                  fixedColumns = list(leftColumns = 2) 
+                )) %>%
         formatRound(c('Disp_Real_C7_1', 'Inact_Real_3', 'Disp_Real_C7_2', 'Inact_2', 'Disp_Real_C7_3', 'Inact_1'), mark = ",", digits = 0) %>% 
         formatPercentage(c('Porc_Inact_3', 'Porc_Inact_2', 'Porc_Inact_1'), digits = 1) %>%
-        formatStyle('Porc_Inact_3', backgroundColor = styleInterval(brks_inact3, clrs_inact3)) %>% 
-        formatStyle('Porc_Inact_2', backgroundColor = styleInterval(brks_inact21, clrs_inact21)) %>% 
-        formatStyle('Porc_Inact_1', backgroundColor = styleInterval(brks_inact21, clrs_inact21)) %>%
+        
+        # Aplicación de estilos con los nuevos cortes
+        formatStyle('Porc_Inact_3', backgroundColor = styleInterval(brks_inact3, clrs_semaforo)) %>% 
+        formatStyle('Porc_Inact_2', backgroundColor = styleInterval(brks_inact2, clrs_semaforo)) %>% 
+        formatStyle('Porc_Inact_1', backgroundColor = styleInterval(brks_inact1, clrs_semaforo)) %>%
+        
         formatStyle(c('Disp_Real_C7_1', 'Disp_Real_C7_2', 'Disp_Real_C7_3'), borderLeft = estilo_borde)
     })
     
@@ -117,7 +175,7 @@ mod_gerencia_ventas_server <- function(id, datos) {
       d <- datos()
       req(d)
       
-      # Usamos d$disponibles
+      # Selección de columnas
       tabla_disponibles_ordenada <- d$disponibles[, c("GV", "Equipo",
                                                       "Disp_Meta", "Disp_Real", "Disp_Alcanz",
                                                       "Saldo_Meta", "Saldo_Real", "Saldo_Alcanz",
@@ -145,19 +203,56 @@ mod_gerencia_ventas_server <- function(id, datos) {
                                    )
       ))
       
-      brks_alcanz <- c(0.99, 1); clrs_alcanz <- c("#f8d7da", "#fff3cd", "#d4edda")
-      brks_cump <- c(0.1, 0.15, 0.25); clrs_cump <- c("#f8d7da", "#fff3cd", "#c8e6c9", "#d4edda")
-      brks_vs_disp <- c(0.003, 0.005, 0.008); clrs_vs_disp <- c("#f8d7da", "#fff3cd", "#c8e6c9", "#d4edda")
+      # --- DEFINICIÓN DE COLORES (Escala Ascendente: Rojo -> Verde) ---
+      # Rojo (Malo), Naranja (Regular), Amarillo (Bueno), Verde (Excelente)
+      clrs_semaforo <- c("#f8ccd1", "#ffdca8", "#fff9e3", "#d4edda")
+
+      # --- CORTES (BREAKS) ---
       
-      datatable(tabla_disponibles_ordenada, container = sketch_ops, rownames = FALSE, 
-                options = list(language = opciones_espanol, pageLength = 20, scrollX = TRUE)) %>%
+      # 1. Disp_Alcanz (Datos: 93% a 97%)
+      # Escala exigente.
+      # < 94% (Rojo), 94-95% (Naranja), 95-96% (Amarillo), > 96% (Verde)
+      brks_disp <- c(0.94, 0.95, 0.96)
+      
+      # 2. Saldo_Alcanz (Datos: Mayoría negativos, Media -265%)
+      # Como la mayoría pierde saldo, el corte es drástico en 0.
+      # < 0% (Rojo: Decrecimiento), 0-50% (Naranja), 50-90% (Amarillo), > 90% (Verde)
+      # Nota: Con tus datos actuales, casi todo saldrá rojo, lo cual es CORRECTO para alertar la caída de saldo.
+      brks_saldo <- c(0, 0.50, 0.90)
+      
+      # 3. Inicios_Cump (Datos: Media 16%, Max 44%)
+      # Adaptado al avance del año actual.
+      # < 10% (Rojo), 10-20% (Naranja), 20-35% (Amarillo), > 35% (Verde)
+      brks_inicios <- c(0.10, 0.20, 0.35)
+      
+      # 4. Recuperos_Cump (Datos: Media 25%, Max 53%)
+      # Adaptado al avance del año actual.
+      # < 15% (Rojo), 15-25% (Naranja), 25-40% (Amarillo), > 40% (Verde)
+      brks_recuperos <- c(0.15, 0.25, 0.40)
+      
+      datatable(tabla_disponibles_ordenada, 
+                container = sketch_ops, 
+                rownames = FALSE, 
+                extensions = 'FixedColumns', 
+                options = list(
+                  language = opciones_espanol, 
+                  pageLength = 10, 
+                  scrollX = TRUE,              
+                  scrollY = "600px",           
+                  scrollCollapse = TRUE,
+                  fixedColumns = list(leftColumns = 2) 
+                )) %>%
         formatRound(c('Disp_Meta', 'Disp_Real', 'Saldo_Meta', 'Saldo_Real',
                       'Inicios_Meta', 'Inicios_Real', 'Recuperos_Meta', 'Recuperos_Real'), mark = ",", digits = 0) %>%
         formatPercentage(c('Disp_Alcanz', 'Saldo_Alcanz', 'Inicios_Cump', 'Inicios_vs_Disp', 'Recuperos_Cump', 'Recuperos_vs_Disp'), digits = 1) %>%
-        formatStyle('Disp_Alcanz', backgroundColor = styleInterval(brks_alcanz, clrs_alcanz)) %>%
-        formatStyle('Inicios_Cump', backgroundColor = styleInterval(brks_cump, clrs_cump)) %>%
-        formatStyle('Inicios_vs_Disp', backgroundColor = styleInterval(brks_vs_disp, clrs_vs_disp)) %>%
-        formatStyle('Recuperos_vs_Disp', backgroundColor = styleInterval(brks_vs_disp, clrs_vs_disp)) %>%
+        
+        # --- APLICACIÓN DE ESTILOS ---
+        formatStyle('Disp_Alcanz', backgroundColor = styleInterval(brks_disp, clrs_semaforo)) %>%
+        formatStyle('Saldo_Alcanz', backgroundColor = styleInterval(brks_saldo, clrs_semaforo)) %>%
+        formatStyle('Inicios_Cump', backgroundColor = styleInterval(brks_inicios, clrs_semaforo)) %>%
+        formatStyle('Recuperos_Cump', backgroundColor = styleInterval(brks_recuperos, clrs_semaforo)) %>%
+        
+        # Bordes de separación de grupos
         formatStyle(c('Disp_Meta', 'Saldo_Meta', 'Inicios_Meta', 'Recuperos_Meta'), borderLeft = estilo_borde)
     })
     
@@ -167,7 +262,7 @@ mod_gerencia_ventas_server <- function(id, datos) {
       d <- datos()
       req(d)
       
-      # Usamos d$actividad
+      # Selección de variables
       tabla_actividad_display <- d$actividad %>% 
         select(GV, Equipo, 
                Actividad_Porc_Meta, Actividad_Porc_Real, Actividad_Porc_Alcanz, 
@@ -193,13 +288,58 @@ mod_gerencia_ventas_server <- function(id, datos) {
                                    )
       ))
       
-      brks_act_alcanz <- c(0.20, 0.30, 0.40); clrs_act_alcanz <- c("#fd7e14", "#fff3cd", "#c8e6c9", "#d4edda")
+      # --- DEFINICIÓN DE COLORES ---
+      # Rojo (Malo), Naranja (Regular), Amarillo (Bueno), Verde (Excelente)
+      clrs_semaforo <- c("#f8ccd1", "#ffdca8", "#fff3cd", "#d4edda")
+    
       
-      datatable(tabla_actividad_display, container = sketch_act, rownames = FALSE, options = list(language = opciones_espanol, pageLength = 20, scrollX = TRUE)) %>%
+      # --- CÁLCULO DE CORTES (Based on Current Year Quartiles) ---
+      
+      # 1. Porcentajes de Actividad (Actividad_Porc_Alcanz y Act_Frec_Porc_Alcanz)
+      # Rango actual: 0.15 a 0.61. Media ~0.30.
+      # < 20% (Rojo: Cuartil inferior)
+      # 20% - 28% (Naranja: Bajo la media)
+      # 28% - 38% (Amarillo: Sobre la media)
+      # > 38% (Verde: Top performers actuales Y años históricos)
+      brks_porc_alcanz <- c(0.20, 0.28, 0.38)
+      
+      # 2. Conteo de Activas (Activas_Alcanz)
+      # Rango actual ligeramente más bajo: Media 0.28.
+      # < 18% (Rojo)
+      # 18% - 25% (Naranja)
+      # 25% - 35% (Amarillo)
+      # > 35% (Verde)
+      brks_activas_alcanz <- c(0.18, 0.25, 0.35)
+      
+      datatable(
+        tabla_actividad_display, 
+        container = sketch_act, 
+        rownames = FALSE,
+        extensions = 'FixedColumns', 
+        options = list(
+          language = opciones_espanol, 
+          pageLength = 10, 
+          scrollX = TRUE,              
+          scrollY = "600px",           
+          scrollCollapse = TRUE,
+          fixedColumns = list(leftColumns = 2) 
+        )
+      ) %>%
         formatRound(c('Activas_Meta', 'Activas_Real'), mark = ",", digits = 0) %>% 
         formatPercentage(c('Actividad_Porc_Meta', 'Actividad_Porc_Real', 'Actividad_Porc_Alcanz', 'Activas_Alcanz', 'Act_Frec_Porc_Meta', 'Act_Frec_Porc_Real', 'Act_Frec_Porc_Alcanz'), digits = 2) %>%
-        formatStyle('Actividad_Porc_Alcanz', backgroundColor = styleInterval(brks_act_alcanz, clrs_act_alcanz)) %>% 
-        formatStyle('Activas_Alcanz', backgroundColor = styleInterval(brks_act_alcanz, clrs_act_alcanz)) %>%
+        
+        # --- APLICACIÓN DE ESTILOS (Solo columnas *_Alcanz) ---
+        
+        # Columna 1: % Actividad Alcanzada
+        formatStyle('Actividad_Porc_Alcanz', backgroundColor = styleInterval(brks_porc_alcanz, clrs_semaforo)) %>% 
+        
+        # Columna 2: Activas Alcanzada (Usa cortes ligeramente más bajos)
+        formatStyle('Activas_Alcanz', backgroundColor = styleInterval(brks_activas_alcanz, clrs_semaforo)) %>%
+        
+        # Columna 3: % Actividad Frecuente Alcanzada
+        formatStyle('Act_Frec_Porc_Alcanz', backgroundColor = styleInterval(brks_porc_alcanz, clrs_semaforo)) %>%
+        
+        # Bordes visuales
         formatStyle(c('Actividad_Porc_Meta', 'Activas_Meta', 'Act_Frec_Porc_Meta'), borderLeft = estilo_borde)
     })
     
@@ -231,14 +371,40 @@ mod_gerencia_ventas_server <- function(id, datos) {
                                     )
       ))
       
-      brks_fact_alcanz <- c(0.25, 0.40, 0.50); clrs_fact_alcanz <- c("#fd7e14", "#fff3cd", "#c8e6c9", "#d4edda")
+      # --- DEFINICIÓN DE COLORES ---
+      # Rojo (Crítico), Naranja (Bajo), Amarillo (Medio/Bueno), Verde (Top Performance)
+      clrs_semaforo <- c("#f8ccd1", "#ffdca8", "#fff9e3", "#d4edda")
       
-      datatable(tabla_productividad_display, container = sketch_prod, rownames = FALSE, 
-                options = list(language = opciones_espanol, pageLength = 20, scrollX = TRUE)) %>%
+      # --- CORTES (Breaks) BASADOS EN EL AÑO EN CURSO ---
+      # Min: 16% | Q1: 20% | Mediana: 30% | Q3: 34% | Max: 59%
+      
+      # 1. Rojo (< 20%): El 25% inferior de la tabla actual.
+      # 2. Naranja (20% - 28%): Por debajo de la mediana actual.
+      # 3. Amarillo (28% - 35%): Alrededor de la mediana y Q3.
+      # 4. Verde (> 35%): Los equipos líderes del año (y todos los años históricos).
+      brks_fact_alcanz <- c(0.20, 0.28, 0.35)
+      
+      datatable(tabla_productividad_display, 
+                container = sketch_prod, 
+                rownames = FALSE, 
+                extensions = 'FixedColumns', 
+                options = list(
+                  language = opciones_espanol, 
+                  pageLength = 10, 
+                  scrollX = TRUE,              
+                  scrollY = "600px",           
+                  scrollCollapse = TRUE,
+                  fixedColumns = list(leftColumns = 2) 
+                )) %>%
         formatCurrency('Prod_Dolar_Real', currency = "$", digits = 2) %>%
         formatRound(c('Fact_Meta', 'Fact_Real'), mark = ",", digits = 0) %>%
         formatPercentage('Fact_Alcanz', digits = 1) %>%
-        formatStyle('Fact_Alcanz', backgroundColor = styleInterval(brks_fact_alcanz, clrs_fact_alcanz)) %>%
+        
+        # --- APLICACIÓN DE ESTILO ---
+        # Solo a la columna Fact_Alcanz
+        formatStyle('Fact_Alcanz', backgroundColor = styleInterval(brks_fact_alcanz, clrs_semaforo)) %>%
+        
+        # Bordes
         formatStyle(c('Prod_Meta', 'Fact_Meta'), borderLeft = estilo_borde)
     })
     

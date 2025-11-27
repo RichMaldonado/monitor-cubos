@@ -7,35 +7,48 @@ mod_data_raw_ui <- function(id) {
   ns <- NS(id)
   
   tagList(
-    h3("Explorador de Datos Crudos (Sin Procesar)", class = "mb-3"),
-    
-    # Usamos navset_card_tab para pestañas contenidas en una tarjeta
-    bslib::navset_card_tab(
-      height = "800px", # Altura fija para scroll
-      full_screen = TRUE,
+    # Título general (opcional, si quieres mantener el título que tenía el card)
+    h3("Explorador de Datos Crudos (Sin Procesar)"),
+
+    # --- SECCIÓN 1: Gerencia Ventas ---
+    div(
+      # Título de la sección (antes era el título de la pestaña)
+      h4("Origen: Gerencia Ventas", style = "color: #666;"),
       
-      # --- Pestaña 1: GV ---
-      nav_panel(
-        title = "Origen: Gerencia Ventas",
-        div(style = "margin-bottom: 10px;",
-            downloadButton(ns("descarga_raw_gv"), "Descargar Excel", class = "btn-sm btn-light")
-        ),
-        shinycssloaders::withSpinner(
-          DT::DTOutput(outputId = ns("tabla_raw_gv"))
-        )
+      # Botón de descarga
+      div(
+        class = "pb-2",
+        downloadButton(ns("descarga_raw_gv"), "Descargar Excel", class = "btn-sm btn-light")
       ),
       
-      # --- Pestaña 2: Sectores ---
-      nav_panel(
-        title = "Origen: Sectores",
-        div(style = "margin-bottom: 10px;",
-            downloadButton(ns("descarga_raw_sector"), "Descargar Excel", class = "btn-sm btn-light")
-        ),
-        shinycssloaders::withSpinner(
-          DT::DTOutput(outputId = ns("tabla_raw_sector"))
-        )
+      # Tabla
+      # Quitamos height="100%" y fill=TRUE para que la tabla ocupe su espacio natural
+      shinycssloaders::withSpinner(
+        DT::DTOutput(outputId = ns("tabla_raw_gv"),height = "600px"),
+        type = 4
       )
-    )
+    ),
+    
+    # Separador visual entre las dos tablas
+    # hr(style = "margin: 30px 0; border-top: 2px solid #eee;"),
+    
+    # --- SECCIÓN 2: Sectores ---
+    div(
+      h4("Origen: Sectores", style = "color: #666;"),
+      
+      div(
+        class = "pb-2",
+        downloadButton(ns("descarga_raw_sector"), "Descargar Excel", class = "btn-sm btn-light")
+      ),
+      
+      shinycssloaders::withSpinner(
+        DT::DTOutput(outputId = ns("tabla_raw_sector"),height = "600px"),
+        type = 4
+      )
+    ),
+    
+    # Espacio final para que no quede pegado al fondo
+    br(), br()
   )
 }
 
@@ -45,15 +58,15 @@ mod_data_raw_ui <- function(id) {
 mod_data_raw_server <- function(id, datos_gv, datos_sector) {
   moduleServer(id, function(input, output, session) {
     
-    # --- Configuración común para tablas raw ---
+    # --- Configuración común ---
+    # NOTA: Quitamos scrollY fijo porque usaremos fillContainer
     opts_raw <- list(
       scrollX = TRUE,
-      scrollY = "600px",
       paging = TRUE,
       lengthMenu = c(20, 50, 100),
       pageLength = 20,
-      dom = 'frtip', # Sin botones B aquí porque usamos el downloadHandler
-      language = opciones_espanol # Variable global definida en global.R
+      dom = 'frtip',
+      language = opciones_espanol # Debe existir en global
     )
     
     # --- 1. Renderizar Tabla GV ---
@@ -63,7 +76,8 @@ mod_data_raw_server <- function(id, datos_gv, datos_sector) {
         datos_gv(), 
         options = opts_raw,
         rownames = FALSE,
-        class = "display nowrap compact"
+        class = "display nowrap compact",
+        fillContainer = TRUE 
       )
     })
     
@@ -74,7 +88,8 @@ mod_data_raw_server <- function(id, datos_gv, datos_sector) {
         datos_sector(), 
         options = opts_raw,
         rownames = FALSE,
-        class = "display nowrap compact"
+        class = "display nowrap compact",
+        fillContainer = TRUE # <--- CLAVE: Ajusta la tabla al contenedor y activa scroll
       )
     })
     

@@ -5,3 +5,12 @@
 .bslib-sidebar-layout>.collapse-toggle {
     color: #000000;
 }
+
+body{
+  zoom:0.9;
+}
+
+:root {
+      /* Ajusta este valor a lo que necesites (ej. 0.5rem, 5px, 0px) */
+      --bslib-mb-spacer: 0rem !important; 
+    }

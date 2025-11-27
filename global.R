@@ -74,8 +74,6 @@ clean_to_numeric <- function(x) {
 
 #' Leer Datos Crudos (Solo lectura)
 leer_excel_raw <- function(ruta_archivo) {
-  # Solo leemos y limpiamos espacios en blanco de los nombres de columnas
-  # para que R no tenga problemas, pero NO tocamos los datos.
   df <- read_excel(ruta_archivo, sheet = "CUBO")
   names(df) <- trimws(names(df)) 
   return(df)
@@ -86,6 +84,7 @@ leer_excel_raw <- function(ruta_archivo) {
 
 #' Procesar Datos de Gerencia de Ventas
 generar_tablas_gv <- function(ruta_archivo) {
+  
   
   cubo_pais_df_raw <- read_excel(ruta_archivo, sheet = "CUBO")
   
@@ -206,51 +205,51 @@ generar_tablas_gv <- function(ruta_archivo) {
 #' Procesar Datos de Sectores (VERSIÓN ROBUSTA ANTI-ACENTOS)
 generar_tabla_sectores <- function(ruta_archivo) {
   
+
   # 1. Leer archivo
-  cubo_sector_df_raw <- read_excel(ruta_archivo, sheet = "CUBO")
+  cubo_sector_df_raw <- read_excel(ruta_archivo, sheet = "CUBO") 
   
-  # --- DIAGNÓSTICO EN CONSOLA (Para ver qué está leyendo R) ---
-  # message("Columnas encontradas en archivo Sector: ")
-  # print(names(cubo_sector_df_raw))
+  cubo_sector_df_raw <- cubo_sector_df_raw %>%
+    filter(
+      `Nombre Sector` != "BAILES S230 GV16"
+    )
   
-  # 2. LIMPIEZA DE ENCABEZADOS (Clave para corregir el error)
-  # Quitamos acentos manualmente para evitar problemas de codificación
+  
+  
+  # 2. LIMPIEZA DE ENCABEZADOS
+  # Quitamos acentos para trabajar internamente de forma segura
   nuevos_nombres <- names(cubo_sector_df_raw)
-  nuevos_nombres <- iconv(nuevos_nombres, to = "ASCII//TRANSLIT") # Intenta convertir a ASCII
-  nuevos_nombres <- gsub("ó", "o", nuevos_nombres) # Refuerzo manual
+  nuevos_nombres <- iconv(nuevos_nombres, to = "ASCII//TRANSLIT")
+  # Refuerzos manuales por si iconv falla en algún entorno Windows
+  nuevos_nombres <- gsub("ó", "o", nuevos_nombres)
   nuevos_nombres <- gsub("Ó", "O", nuevos_nombres)
   nuevos_nombres <- gsub("é", "e", nuevos_nombres)
   nuevos_nombres <- gsub("í", "i", nuevos_nombres) 
   nuevos_nombres <- gsub("á", "a", nuevos_nombres)
-  nuevos_nombres <- trimws(nuevos_nombres) # Quitar espacios
+  nuevos_nombres <- trimws(nuevos_nombres)
   
   names(cubo_sector_df_raw) <- nuevos_nombres
   
-  # message("Columnas normalizadas: ")
-  # print(names(cubo_sector_df_raw))
-  
-  # 3. Limpieza de Datos
-  # Ahora usamos los nombres SIN ACENTOS en la lógica
+  # 3. Limpieza de Datos (Nombres SIN ACENTOS internamente)
   cubo_clean <- cubo_sector_df_raw %>%
     filter(grepl("GV[0-9]{1,2}", `Nombre Sector`)) %>%
-    # Solo aplicamos clean_to_numeric a las columnas que NO son Identificadores
     mutate(across(-c(`Nombre Sector`, `Codigo Sector`), clean_to_numeric))
   
-  # 4. Verificar existencia de la columna crítica antes de operar
+  # 4. Verificación
   if (!"Facturacion Total Real" %in% names(cubo_clean)) {
-    stop("ERROR CRÍTICO: No se encuentra la columna 'Facturacion Total Real' (sin tilde). Revisa los logs de nombres.")
+    stop("ERROR CRÍTICO: No se encuentra la columna 'Facturacion Total Real'.")
   }
   
   total_facturacion_gerencia <- sum(cubo_clean$`Facturacion Total Real`, na.rm = TRUE)
   if(total_facturacion_gerencia == 0) total_facturacion_gerencia <- 1 
   
-
-  # 5. Cálculos
+  # 5. Cálculos (TODO AQUÍ DEBE SER SIN TILDES)
   resumen_general <- cubo_clean %>%
     mutate(
-      # Usamos "Facturacion" sin tilde
+      # CORRECCIÓN 1: Usar `Facturacion` (sin tilde) porque así quedó tras el paso 2
       `%Sect /GV` = division_segura(`Facturacion Total Real`, total_facturacion_gerencia),
       
+      # Creamos las columnas SIN tilde primero para evitar confusiones en R
       `Facturacion % Cumpl` = division_segura(`Facturacion Total Real`, `Facturacion Total Meta`),
       `Facturacion Faltan 95%` = (`Facturacion Total Meta` * 0.95) - `Facturacion Total Real`,
       `Facturacion Faltan 100%` = `Facturacion Total Meta` - `Facturacion Total Real`,
@@ -283,18 +282,20 @@ generar_tabla_sectores <- function(ruta_archivo) {
       `% I2` = division_segura(`Inactiva 2 Real`, `Disponibles Real`)
     )
   
-  # 6. Selección y Renombre Final (Aquí volvemos a poner los acentos para la visualización bonita)
+  # 6. Selección y Renombre Final (Aquí PONEMOS LAS TILDES para el usuario)
+  # Estructura: `Nombre Bonito (Con Tilde)` = `Nombre Interno (Sin Tilde)`
   resumen_final <- resumen_general %>%
     select(
-      `Código Sector` = `Codigo Sector`, # De vuelta a bonito
+      `Código Sector` = `Codigo Sector`, 
       `Sector` = `Nombre Sector`,
       `%Sect /GV`,
       
+      # CORRECCIÓN 2: Renombrar explícitamente agregando la tilde
       `Facturación Meta` = `Facturacion Total Meta`,
       `Facturación Real` = `Facturacion Total Real`,
-      `Facturacion % Cumpl`,
-      `Facturacion Faltan 95%`,
-      `Facturacion Faltan 100%`,
+      `Facturación % Cumpl` = `Facturacion % Cumpl`,         # Mapeo clave
+      `Facturación Faltan 95%` = `Facturacion Faltan 95%`,   # Mapeo clave
+      `Facturación Faltan 100%` = `Facturacion Faltan 100%`, # Mapeo clave
       
       `Disponibles Meta`,
       `Disponibles Real`,
@@ -373,7 +374,9 @@ theme_natura <- bslib::bs_theme(
   
   "bslib-sidebar-bg" = "#7373730d",
   "link-color" = "#FF9526",
-  "link-hover-color" = "#CF3100"
+  "link-hover-color" = "#CF3100",
+  
+  "mb-spacer" = "0rem"
   
 ) %>% 
   # AGREGAMOS ESTA REGLA CSS:
@@ -434,38 +437,53 @@ opciones_espanol <- list(
   oPaginate = list(sFirst = "Primero", sLast = "Último", sNext = "Siguiente", sPrevious = "Anterior")
 )
 
-estructura_columnas <- list(
-  "Facturación" = list(
-    "Meta" = "Facturación Meta", "Real" = "Facturación Real", "% Cumpl" = "Facturacion % Cumpl",
-    "Faltan 95%" = "Facturacion Faltan 95%", "Faltan 100%" = "Facturacion Faltan 100%"
-  ),
-  "Disponibles" = list(
-    "Meta" = "Disponibles Meta", "Real" = "Disponibles Real", "% Cumpl" = "Disponibles % Cumpl",
-    "Faltan 95%" = "Disponibles Faltan 95%", "Faltan 100%" = "Disponibles Faltan 100%"
-  ),
-  "Activas" = list(
-    "Meta" = "Activas Meta", "Real" = "Activas Real", "% Cumpl" = "Activas % Cumpl",
-    "Faltan 95%" = "Activas Faltan 95%", "Faltan 100%" = "Activas Faltan 100%"
-  ),
-  "Saldo" = list(
-    "Real" = "Saldo Real", "Meta" = "Saldo Meta", "% Cumpl" = "Saldo % Cumpl", "Faltan!" = "Saldo Faltan!"
-  ),
-  "Productividad" = list(
-    "Meta" = "Productividad Meta", "Real" = "Productividad Real", "% Cumpl" = "Productividad % Cumpl"
-  ),
-  "% Actividad" = list(
-    "Real" = "% Actividad Real", "Meta" = "% Actividad Meta", "% Cumpl" = "% Actividad % Cumpl"
-  ),
-  "Inicios + Reinicios" = list(
-    "Meta" = "Inicios + Reinicios Meta", "Real" = "Inicios + Reinicios Real", 
-    "% Cumpl" = "Inicios + Reinicios % Cumpl", "Faltan!" = "Inicios + Reinicios Faltan!"
-  ),
-  "Recuperos" = list(
-    "Meta" = "Recuperos Meta", "Real" = "Recuperos Real", "% Cumpl" = "Recuperos % Cumpl", "Faltan!" = "Recuperos Faltan!"
-  ),
-  "Inact 3" = list("Real" = "Inact 3 Real", "% I3" = "% I3"),
-  "Inact 2" = list("Real" = "Inact 2 Real", "% I2" = "% I2"),
-  "Indisponibles" = list("Total" = "Indisponibles Total", "Inact 4" = "I4", "Inact 5" = "I5", "Inact 6" = "I6")
+# estructura_columnas <- list(
+#   "Facturación" = list(
+#     "Meta" = "Facturación Meta", "Real" = "Facturación Real", "% Cumpl" = "Facturacion % Cumpl",
+#     "Faltan 95%" = "Facturacion Faltan 95%", "Faltan 100%" = "Facturacion Faltan 100%"
+#   ),
+#   "Disponibles" = list(
+#     "Meta" = "Disponibles Meta", "Real" = "Disponibles Real", "% Cumpl" = "Disponibles % Cumpl",
+#     "Faltan 95%" = "Disponibles Faltan 95%", "Faltan 100%" = "Disponibles Faltan 100%"
+#   ),
+#   "Activas" = list(
+#     "Meta" = "Activas Meta", "Real" = "Activas Real", "% Cumpl" = "Activas % Cumpl",
+#     "Faltan 95%" = "Activas Faltan 95%", "Faltan 100%" = "Activas Faltan 100%"
+#   ),
+#   "Saldo" = list(
+#     "Real" = "Saldo Real", "Meta" = "Saldo Meta", "% Cumpl" = "Saldo % Cumpl", "Faltan!" = "Saldo Faltan!"
+#   ),
+#   "Productividad" = list(
+#     "Meta" = "Productividad Meta", "Real" = "Productividad Real", "% Cumpl" = "Productividad % Cumpl"
+#   ),
+#   "% Actividad" = list(
+#     "Real" = "% Actividad Real", "Meta" = "% Actividad Meta", "% Cumpl" = "% Actividad % Cumpl"
+#   ),
+#   "Inicios + Reinicios" = list(
+#     "Meta" = "Inicios + Reinicios Meta", "Real" = "Inicios + Reinicios Real",
+#     "% Cumpl" = "Inicios + Reinicios % Cumpl", "Faltan!" = "Inicios + Reinicios Faltan!"
+#   ),
+#   "Recuperos" = list(
+#     "Meta" = "Recuperos Meta", "Real" = "Recuperos Real", "% Cumpl" = "Recuperos % Cumpl", "Faltan!" = "Recuperos Faltan!"
+#   ),
+#   "Inact 3" = list("Real" = "Inact 3 Real", "% I3" = "% I3"),
+#   "Inact 2" = list("Real" = "Inact 2 Real", "% I2" = "% I2"),
+#   "Indisponibles" = list("Total" = "Indisponibles Total", "Inact 4" = "I4", "Inact 5" = "I5", "Inact 6" = "I6")
+# )
+
+estructura_columnas <- c(
+  "Facturación",
+  "Disponibles",
+  "Activas",
+  "Saldo",
+  "Productividad",
+  "% Actividad",
+  "Inicios + Reinicios",
+  "Recuperos",
+  "Inact 3",
+  "Inact 2",
+  "Indisponibles"
 )
 
+# El selector recibe simplemente esta lista de nombres
 choices_virtual_select <- estructura_columnas
