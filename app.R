@@ -56,7 +56,7 @@ ui <- page_navbar(
         selected = ciclos_disponibles[1],
         width = "140px", 
         options = list(
-          `live-search` = TRUE,
+          #`live-search` = TRUE,
           style = "btn-light btn-sm" 
         )
       ),

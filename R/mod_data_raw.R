@@ -69,28 +69,54 @@ mod_data_raw_server <- function(id, datos_gv, datos_sector) {
       language = opciones_espanol # Debe existir en global
     )
     
+    # Opciones para fijar columnas (ya definidas antes)
+    opts_fijas <- list(
+      scrollX = TRUE,
+      fixedColumns = list(leftColumns = 2)
+    )
+    
+    # Definimos el estilo de la línea divisoria para reutilizarlo
+    # "2px solid #dcdcdc" crea una línea gris sólida de 2 pixeles
+    estilo_borde <- "3px solid #666" 
+    
     # --- 1. Renderizar Tabla GV ---
     output$tabla_raw_gv <- DT::renderDT({
       req(datos_gv())
+      df <- datos_gv() # Guardamos el df para acceder a los nombres de columna
+      
       datatable(
-        datos_gv(), 
-        options = opts_raw,
+        df, 
+        options = utils::modifyList(opts_raw, opts_fijas),
         rownames = FALSE,
         class = "display nowrap compact",
-        fillContainer = TRUE 
-      )
+        fillContainer = TRUE,
+        extensions = 'FixedColumns'
+      ) %>%
+        # AQUI ESTA LA MAGIA:
+        formatStyle(
+          columns = names(df)[2],     # Seleccionamos la 2da columna (por nombre)
+          `border-right` = estilo_borde # Aplicamos el borde derecho
+        )
     })
     
     # --- 2. Renderizar Tabla Sector ---
     output$tabla_raw_sector <- DT::renderDT({
       req(datos_sector())
+      df <- datos_sector()
+      
       datatable(
-        datos_sector(), 
-        options = opts_raw,
+        df, 
+        options = utils::modifyList(opts_raw, opts_fijas),
         rownames = FALSE,
         class = "display nowrap compact",
-        fillContainer = TRUE # <--- CLAVE: Ajusta la tabla al contenedor y activa scroll
-      )
+        fillContainer = TRUE,
+        extensions = 'FixedColumns'
+      ) %>%
+        # Aplicamos la misma linea divisoria
+        formatStyle(
+          columns = names(df)[2],
+          `border-right` = estilo_borde
+        )
     })
     
     # --- 3. Descargas ---

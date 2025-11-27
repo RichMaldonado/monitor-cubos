@@ -158,6 +158,10 @@ mod_gerencia_ventas_server <- function(id, datos, lista_gvs) {
                   scrollCollapse = TRUE,       
                   fixedColumns = list(leftColumns = 2) 
                 )) %>%
+        formatStyle(
+          columns = names(tabla_inactividad_display)[2],     # Seleccionamos la 2da columna (por nombre)
+          `border-right` = estilo_borde # Aplicamos el borde derecho
+        ) %>%
         formatRound(c('Disp_Real_C7_1', 'Inact_Real_3', 'Disp_Real_C7_2', 'Inact_2', 'Disp_Real_C7_3', 'Inact_1'), mark = ",", digits = 0) %>% 
         formatPercentage(c('Porc_Inact_3', 'Porc_Inact_2', 'Porc_Inact_1'), digits = 1) %>%
         
@@ -242,6 +246,10 @@ mod_gerencia_ventas_server <- function(id, datos, lista_gvs) {
                   scrollCollapse = TRUE,
                   fixedColumns = list(leftColumns = 2) 
                 )) %>%
+        formatStyle(
+          columns = names(tabla_disponibles_ordenada)[2],     # Seleccionamos la 2da columna (por nombre)
+          `border-right` = estilo_borde # Aplicamos el borde derecho
+        ) %>%
         formatRound(c('Disp_Meta', 'Disp_Real', 'Saldo_Meta', 'Saldo_Real',
                       'Inicios_Meta', 'Inicios_Real', 'Recuperos_Meta', 'Recuperos_Real'), mark = ",", digits = 0) %>%
         formatPercentage(c('Disp_Alcanz', 'Saldo_Alcanz', 'Inicios_Cump', 'Inicios_vs_Disp', 'Recuperos_Cump', 'Recuperos_vs_Disp'), digits = 1) %>%
@@ -325,6 +333,10 @@ mod_gerencia_ventas_server <- function(id, datos, lista_gvs) {
           fixedColumns = list(leftColumns = 2) 
         )
       ) %>%
+        formatStyle(
+          columns = names(tabla_actividad_display)[2],     # Seleccionamos la 2da columna (por nombre)
+          `border-right` = estilo_borde # Aplicamos el borde derecho
+        ) %>%
         formatRound(c('Activas_Meta', 'Activas_Real'), mark = ",", digits = 0) %>% 
         formatPercentage(c('Actividad_Porc_Meta', 'Actividad_Porc_Real', 'Actividad_Porc_Alcanz', 'Activas_Alcanz', 'Act_Frec_Porc_Meta', 'Act_Frec_Porc_Real', 'Act_Frec_Porc_Alcanz'), digits = 2) %>%
         
@@ -396,6 +408,11 @@ mod_gerencia_ventas_server <- function(id, datos, lista_gvs) {
                   scrollCollapse = TRUE,
                   fixedColumns = list(leftColumns = 2) 
                 )) %>%
+        # AQUI ESTA LA MAGIA:
+        formatStyle(
+          columns = names(tabla_productividad_display)[2],     # Seleccionamos la 2da columna (por nombre)
+          `border-right` = estilo_borde # Aplicamos el borde derecho
+        ) %>%
         formatCurrency('Prod_Dolar_Real', currency = "$", digits = 2) %>%
         formatRound(c('Fact_Meta', 'Fact_Real'), mark = ",", digits = 0) %>%
         formatPercentage('Fact_Alcanz', digits = 1) %>%

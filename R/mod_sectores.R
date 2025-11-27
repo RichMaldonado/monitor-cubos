@@ -139,7 +139,7 @@ mod_sectores_ui <- function(id) {
 
 
 # ==============================================================================
-# 3. SERVIDOR (Sin cambios lógicos, solo estructura)
+# 3. SERVIDOR 
 # ==============================================================================
 
 mod_sectores_server <- function(id, datos, lista_gvs) {
@@ -283,7 +283,12 @@ mod_sectores_server <- function(id, datos, lista_gvs) {
           paging = FALSE, 
           fixedColumns = list(leftColumns = 2)
         )
-      )
+      ) %>%
+        # AQUI ESTA LA MAGIA:
+        formatStyle(
+          columns = names(datos_mostrados)[2],     # Seleccionamos la 2da columna (por nombre)
+          `border-right` = estilo_borde # Aplicamos el borde derecho
+        )
       
       cols_visibles <- names(datos_mostrados)
       
